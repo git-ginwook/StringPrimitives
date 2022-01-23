@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 15:54:11
+Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 16:26:49
 <Basic Logic and Arithmetic Program     (Project1_leeginw.as  Page 1 - 1
 
 
@@ -17,7 +17,12 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 15:54:11
 				;	The program takes three integers and calculates the sums and differences in a particular order:
 				;		[A+B, A-B, A+C, A-C, B+C, B-C, A+B+C]
 				;	Once, all calculations are displayed, there will be a closing remark with a good bye.
-
+				;	Extra Credit: 
+				;		1) before the closing remark, user will be asked whether to play this program again.
+				;			- the program will repeat until the user chooses to quit.
+				;		2) when user inputs the second and third numbers, program checks to see 
+				;			if A is less than B, or B is less than C, sequentially.
+				;			if "yes" in either case, the program jumps to descending error message and ends the program.
 
 				INCLUDE Irvine32.inc
 			      C ; Include file for Irvine32.lib             (Irvine32.inc)
@@ -125,18 +130,18 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 15:54:11
 	   79 65 21 00
 
 					; Extra Credit #1
- 00000144 2A 2A 45 43 3A		extra_1			BYTE	"**EC: repeat this program until the user chooses to quit.",13,10,0
-	   20 72 65 70 65
-	   61 74 20 74 68
-	   69 73 20 70 72
-	   6F 67 72 61 6D
-	   20 75 6E 74 69
-	   6C 20 74 68 65
-	   20 75 73 65 72
-	   20 63 68 6F 6F
-	   73 65 73 20 74
-	   6F 20 71 75 69
-	   74 2E 0D 0A 00
+ 00000144 2A 2A 45 43 23		extra_1			BYTE	"**EC#1: repeat this program until the user chooses to quit.",0
+	   31 3A 20 72 65
+	   70 65 61 74 20
+	   74 68 69 73 20
+	   70 72 6F 67 72
+	   61 6D 20 75 6E
+	   74 69 6C 20 74
+	   68 65 20 75 73
+	   65 72 20 63 68
+	   6F 6F 73 65 73
+	   20 74 6F 20 71
+	   75 69 74 2E 00
  00000180 70 6C 61 79 20		ask				BYTE	"play again? (Yes: press 1, No: press 0) ",0
 	   61 67 61 69 6E
 	   3F 20 28 59 65
@@ -146,8 +151,41 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 15:54:11
 	   20 70 72 65 73
 	   73 20 30 29 20
 	   00
-					
  000001A9 00000000			response		DWORD	?		; 1 = play again, 0 = exit
+
+					; Extra Credit #2
+ 000001AD 2A 2A 45 43 23		extra_2			BYTE	"**EC#2: check if numbers are not in strictly descending order.",13,10,0
+	   32 3A 20 63 68
+	   65 63 6B 20 69
+	   66 20 6E 75 6D
+	   62 65 72 73 20
+	   61 72 65 20 6E
+	   6F 74 20 69 6E
+	   20 73 74 72 69
+	   63 74 6C 79 20
+	   64 65 73 63 65
+	   6E 64 69 6E 67
+	   20 6F 72 64 65
+	   72 2E 0D 0A 00
+ 000001EE 45 52 52 4F 52		desc_error		BYTE	"ERROR: The numbers are not in descending order!",13,10,0
+	   3A 20 54 68 65
+	   20 6E 75 6D 62
+	   65 72 73 20 61
+	   72 65 20 6E 6F
+	   74 20 69 6E 20
+	   64 65 73 63 65
+	   6E 64 69 6E 67
+	   20 6F 72 64 65
+	   72 21 0D 0A 00
+ 00000220 50 6C 65 61 73		error_bye		BYTE	"Please stick to the rules next time. Bye!",0
+	   65 20 73 74 69
+	   63 6B 20 74 6F
+	   20 74 68 65 20
+	   72 75 6C 65 73
+	   20 6E 65 78 74
+	   20 74 69 6D 65
+	   2E 20 42 79 65
+	   21 00
 
  00000000			.code
  00000000			main PROC
@@ -161,205 +199,225 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 15:54:11
  00000014  E8 00000000 E		CALL	WriteString
  00000019  E8 00000000 E		CALL	CrLf
 
- 0000001E  BA 00000028 R		MOV		EDX, OFFSET		intro_2			; program description
+ 0000001E  BA 000001AD R		MOV		EDX, OFFSET		extra_2			; extra credit #2 description
  00000023  E8 00000000 E		CALL	WriteString
  00000028  E8 00000000 E		CALL	CrLf
 
- 0000002D			_again:
-					; 2. get the data (from user)
- 0000002D  BA 00000070 R		MOV		EDX, OFFSET		prompt_1		; instruction for user
+ 0000002D  BA 00000028 R		MOV		EDX, OFFSET		intro_2			; program description
  00000032  E8 00000000 E		CALL	WriteString
  00000037  E8 00000000 E		CALL	CrLf
 
+ 0000003C			_again:
+					; 2. get the data (from user)
+ 0000003C  BA 00000070 R		MOV		EDX, OFFSET		prompt_1		; instruction for user
+ 00000041  E8 00000000 E		CALL	WriteString
+ 00000046  E8 00000000 E		CALL	CrLf
+
 					; (1) get the first number(A) from user
- 0000003C  BA 000000B1 R		MOV		EDX, OFFSET		prompt_2		; input request
- 00000041  E8 00000000 E		CALL	WriteString						
- 00000046  E8 00000000 E		CALL	ReadDec							; preconditions: None 
+ 0000004B  BA 000000B1 R		MOV		EDX, OFFSET		prompt_2		; input request
+ 00000050  E8 00000000 E		CALL	WriteString						
+ 00000055  E8 00000000 E		CALL	ReadDec							; preconditions: None 
 															; postconditions: value is saved in EAX
- 0000004B  A3 000000DF R		MOV		firstNumber, EAX				; value is saved in firstNumber
+ 0000005A  A3 000000DF R		MOV		firstNumber, EAX				; value is saved in firstNumber
 
 					; (2) get the second number(B) from user
- 00000050  BA 000000C0 R		MOV		EDX, OFFSET		prompt_3		; input request
- 00000055  E8 00000000 E		CALL	WriteString						
- 0000005A  E8 00000000 E		CALL	ReadDec							; preconditions: None 
+ 0000005F  BA 000000C0 R		MOV		EDX, OFFSET		prompt_3		; input request
+ 00000064  E8 00000000 E		CALL	WriteString						
+ 00000069  E8 00000000 E		CALL	ReadDec							; preconditions: None 
 															; postconditions: value is saved in EAX
- 0000005F  A3 000000E3 R		MOV		secondNumber, EAX				; value is saved in secondNumber
+ 0000006E  A3 000000E3 R		MOV		secondNumber, EAX				; value is saved in secondNumber
+
+					; EC#2. check if the first number is greater than the second number
+ 00000073  A1 000000DF R		MOV		EAX, firstNumber
+ 00000078  3B 05 000000E3 R		CMP		EAX, secondNumber
+ 0000007E  0F 82 00000270		JB		_notDescend						; jump to notDescend label if firstNumber < secondNumber
 
 					; (3) get the third number(C) from user
- 00000064  BA 000000D0 R		MOV		EDX, OFFSET		prompt_4		; input request
- 00000069  E8 00000000 E		CALL	WriteString						
- 0000006E  E8 00000000 E		CALL	ReadDec							; preconditions: None 
+ 00000084  BA 000000D0 R		MOV		EDX, OFFSET		prompt_4		; input request
+ 00000089  E8 00000000 E		CALL	WriteString						
+ 0000008E  E8 00000000 E		CALL	ReadDec							; preconditions: None 
 															; postconditions: value is saved in EAX
- 00000073  A3 000000E7 R		MOV		thirdNumber, EAX				; value is saved in thirdNumber
+ 00000093  A3 000000E7 R		MOV		thirdNumber, EAX				; value is saved in thirdNumber
 
+					; EC#2. check if the second number is greater than the third number
+ 00000098  A1 000000E3 R		MOV		EAX, secondNumber
+ 0000009D  3B 05 000000E7 R		CMP		EAX, thirdNumber
+ 000000A3  0F 82 0000024B		JB		_notDescend						; jump to notDescend label if secondNumber < thirdNumber
 
 					; 3. calculate the required values
-
 					; (1) add the first and second numbers: A + B
- 00000078  A1 000000DF R		MOV		EAX, firstNumber
- 0000007D  8B 1D 000000E3 R		MOV		EBX, secondNumber
- 00000083  03 C3			ADD		EAX, EBX
- 00000085  A3 000000F7 R		MOV		result_1, EAX					; store the result of addition in result_1
+ 000000A9  A1 000000DF R		MOV		EAX, firstNumber
+ 000000AE  8B 1D 000000E3 R		MOV		EBX, secondNumber
+ 000000B4  03 C3			ADD		EAX, EBX
+ 000000B6  A3 000000F7 R		MOV		result_1, EAX					; store the result of addition in result_1
 
 					; (2) subtract the first and second numbers: A - B
- 0000008A  A1 000000DF R		MOV		EAX, firstNumber
- 0000008F  8B 1D 000000E3 R		MOV		EBX, secondNumber
- 00000095  2B C3			SUB		EAX, EBX
- 00000097  A3 000000FB R		MOV		result_2, EAX					; store the result of subtraction in result_2
+ 000000BB  A1 000000DF R		MOV		EAX, firstNumber
+ 000000C0  8B 1D 000000E3 R		MOV		EBX, secondNumber
+ 000000C6  2B C3			SUB		EAX, EBX
+ 000000C8  A3 000000FB R		MOV		result_2, EAX					; store the result of subtraction in result_2
 
 					; (3) add the first and third numbers: A + C
- 0000009C  A1 000000DF R		MOV		EAX, firstNumber
- 000000A1  8B 1D 000000E7 R		MOV		EBX, thirdNumber
- 000000A7  03 C3			ADD		EAX, EBX
- 000000A9  A3 000000FF R		MOV		result_3, EAX					; store the result of addition in result_3
+ 000000CD  A1 000000DF R		MOV		EAX, firstNumber
+ 000000D2  8B 1D 000000E7 R		MOV		EBX, thirdNumber
+ 000000D8  03 C3			ADD		EAX, EBX
+ 000000DA  A3 000000FF R		MOV		result_3, EAX					; store the result of addition in result_3
 
 					; (4) subtract the first and third numbers: A - C
- 000000AE  A1 000000DF R		MOV		EAX, firstNumber
- 000000B3  8B 1D 000000E7 R		MOV		EBX, thirdNumber
- 000000B9  2B C3			SUB		EAX, EBX
- 000000BB  A3 00000103 R		MOV		result_4, EAX					; store the result of subtraction in result_4
+ 000000DF  A1 000000DF R		MOV		EAX, firstNumber
+ 000000E4  8B 1D 000000E7 R		MOV		EBX, thirdNumber
+ 000000EA  2B C3			SUB		EAX, EBX
+ 000000EC  A3 00000103 R		MOV		result_4, EAX					; store the result of subtraction in result_4
 
 					; (5) add the second and third numbers: B + C
- 000000C0  A1 000000E3 R		MOV		EAX, secondNumber
- 000000C5  8B 1D 000000E7 R		MOV		EBX, thirdNumber
- 000000CB  03 C3			ADD		EAX, EBX
- 000000CD  A3 00000107 R		MOV		result_5, EAX					; store the result of addition in result_5
+ 000000F1  A1 000000E3 R		MOV		EAX, secondNumber
+ 000000F6  8B 1D 000000E7 R		MOV		EBX, thirdNumber
+ 000000FC  03 C3			ADD		EAX, EBX
+ 000000FE  A3 00000107 R		MOV		result_5, EAX					; store the result of addition in result_5
 
 					; (6) subtract the second and third numbers: B - C
- 000000D2  A1 000000E3 R		MOV		EAX, secondNumber
- 000000D7  8B 1D 000000E7 R		MOV		EBX, thirdNumber
- 000000DD  2B C3			SUB		EAX, EBX
- 000000DF  A3 0000010B R		MOV		result_6, EAX					; store the result of subtraction in result_6
+ 00000103  A1 000000E3 R		MOV		EAX, secondNumber
+ 00000108  8B 1D 000000E7 R		MOV		EBX, thirdNumber
+ 0000010E  2B C3			SUB		EAX, EBX
+ 00000110  A3 0000010B R		MOV		result_6, EAX					; store the result of subtraction in result_6
 
 					; (7) add the first, second and third numbers: A + B + C
- 000000E4  A1 000000DF R		MOV		EAX, firstNumber
- 000000E9  8B 1D 000000E3 R		MOV		EBX, secondNumber
- 000000EF  03 C3			ADD		EAX, EBX
- 000000F1  8B 1D 000000E7 R		MOV		EBX, thirdNumber
- 000000F7  03 C3			ADD		EAX, EBX
- 000000F9  A3 0000010F R		MOV		result_7, EAX					; store the result of addition in result_7
+ 00000115  A1 000000DF R		MOV		EAX, firstNumber
+ 0000011A  8B 1D 000000E3 R		MOV		EBX, secondNumber
+ 00000120  03 C3			ADD		EAX, EBX
+ 00000122  8B 1D 000000E7 R		MOV		EBX, thirdNumber
+ 00000128  03 C3			ADD		EAX, EBX
+ 0000012A  A3 0000010F R		MOV		result_7, EAX					; store the result of addition in result_7
 
-					; 4. display the results 
-					
+					; 4. display the results 	
 					; (1) A + B = result_1: add the first and second numbers
- 000000FE  A1 000000DF R		MOV		EAX, firstNumber
- 00000103  E8 00000000 E		CALL	WriteDec
- 00000108  BA 000000EB R		MOV		EDX, OFFSET		prompt_plus
- 0000010D  E8 00000000 E		CALL	WriteString
- 00000112  A1 000000E3 R		MOV		EAX, secondNumber
- 00000117  E8 00000000 E		CALL	WriteDec
- 0000011C  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
- 00000121  E8 00000000 E		CALL	WriteString
- 00000126  A1 000000F7 R		MOV		EAX, result_1
- 0000012B  E8 00000000 E		CALL	WriteDec
- 00000130  E8 00000000 E		CALL	CrLf
+ 0000012F  A1 000000DF R		MOV		EAX, firstNumber
+ 00000134  E8 00000000 E		CALL	WriteDec
+ 00000139  BA 000000EB R		MOV		EDX, OFFSET		prompt_plus
+ 0000013E  E8 00000000 E		CALL	WriteString
+ 00000143  A1 000000E3 R		MOV		EAX, secondNumber
+ 00000148  E8 00000000 E		CALL	WriteDec
+ 0000014D  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
+ 00000152  E8 00000000 E		CALL	WriteString
+ 00000157  A1 000000F7 R		MOV		EAX, result_1
+ 0000015C  E8 00000000 E		CALL	WriteDec
+ 00000161  E8 00000000 E		CALL	CrLf
 
 					; (2) A - B = result_2: subtract the first and second numbers
- 00000135  A1 000000DF R		MOV		EAX, firstNumber
- 0000013A  E8 00000000 E		CALL	WriteDec
- 0000013F  BA 000000EF R		MOV		EDX, OFFSET		prompt_minus
- 00000144  E8 00000000 E		CALL	WriteString
- 00000149  A1 000000E3 R		MOV		EAX, secondNumber
- 0000014E  E8 00000000 E		CALL	WriteDec
- 00000153  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
- 00000158  E8 00000000 E		CALL	WriteString
- 0000015D  A1 000000FB R		MOV		EAX, result_2
- 00000162  E8 00000000 E		CALL	WriteDec
- 00000167  E8 00000000 E		CALL	CrLf
+ 00000166  A1 000000DF R		MOV		EAX, firstNumber
+ 0000016B  E8 00000000 E		CALL	WriteDec
+ 00000170  BA 000000EF R		MOV		EDX, OFFSET		prompt_minus
+ 00000175  E8 00000000 E		CALL	WriteString
+ 0000017A  A1 000000E3 R		MOV		EAX, secondNumber
+ 0000017F  E8 00000000 E		CALL	WriteDec
+ 00000184  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
+ 00000189  E8 00000000 E		CALL	WriteString
+ 0000018E  A1 000000FB R		MOV		EAX, result_2
+ 00000193  E8 00000000 E		CALL	WriteDec
+ 00000198  E8 00000000 E		CALL	CrLf
 
 					; (3) A + C = result_3: add the first and third numbers
- 0000016C  A1 000000DF R		MOV		EAX, firstNumber
- 00000171  E8 00000000 E		CALL	WriteDec
- 00000176  BA 000000EB R		MOV		EDX, OFFSET		prompt_plus
- 0000017B  E8 00000000 E		CALL	WriteString
- 00000180  A1 000000E7 R		MOV		EAX, thirdNumber
- 00000185  E8 00000000 E		CALL	WriteDec
- 0000018A  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
- 0000018F  E8 00000000 E		CALL	WriteString
- 00000194  A1 000000FF R		MOV		EAX, result_3
- 00000199  E8 00000000 E		CALL	WriteDec
- 0000019E  E8 00000000 E		CALL	CrLf
+ 0000019D  A1 000000DF R		MOV		EAX, firstNumber
+ 000001A2  E8 00000000 E		CALL	WriteDec
+ 000001A7  BA 000000EB R		MOV		EDX, OFFSET		prompt_plus
+ 000001AC  E8 00000000 E		CALL	WriteString
+ 000001B1  A1 000000E7 R		MOV		EAX, thirdNumber
+ 000001B6  E8 00000000 E		CALL	WriteDec
+ 000001BB  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
+ 000001C0  E8 00000000 E		CALL	WriteString
+ 000001C5  A1 000000FF R		MOV		EAX, result_3
+ 000001CA  E8 00000000 E		CALL	WriteDec
+ 000001CF  E8 00000000 E		CALL	CrLf
 
 					; (4) A - C = result_4: subtract the first and third numbers
- 000001A3  A1 000000DF R		MOV		EAX, firstNumber
- 000001A8  E8 00000000 E		CALL	WriteDec
- 000001AD  BA 000000EF R		MOV		EDX, OFFSET		prompt_minus
- 000001B2  E8 00000000 E		CALL	WriteString
- 000001B7  A1 000000E7 R		MOV		EAX, thirdNumber
- 000001BC  E8 00000000 E		CALL	WriteDec
- 000001C1  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
- 000001C6  E8 00000000 E		CALL	WriteString
- 000001CB  A1 00000103 R		MOV		EAX, result_4
- 000001D0  E8 00000000 E		CALL	WriteDec
- 000001D5  E8 00000000 E		CALL	CrLf
+ 000001D4  A1 000000DF R		MOV		EAX, firstNumber
+ 000001D9  E8 00000000 E		CALL	WriteDec
+ 000001DE  BA 000000EF R		MOV		EDX, OFFSET		prompt_minus
+ 000001E3  E8 00000000 E		CALL	WriteString
+ 000001E8  A1 000000E7 R		MOV		EAX, thirdNumber
+ 000001ED  E8 00000000 E		CALL	WriteDec
+ 000001F2  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
+ 000001F7  E8 00000000 E		CALL	WriteString
+ 000001FC  A1 00000103 R		MOV		EAX, result_4
+ 00000201  E8 00000000 E		CALL	WriteDec
+ 00000206  E8 00000000 E		CALL	CrLf
 
 					; (5) B + C = result_5: add the second and third numbers
- 000001DA  A1 000000E3 R		MOV		EAX, secondNumber
- 000001DF  E8 00000000 E		CALL	WriteDec
- 000001E4  BA 000000EB R		MOV		EDX, OFFSET		prompt_plus
- 000001E9  E8 00000000 E		CALL	WriteString
- 000001EE  A1 000000E7 R		MOV		EAX, thirdNumber
- 000001F3  E8 00000000 E		CALL	WriteDec
- 000001F8  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
- 000001FD  E8 00000000 E		CALL	WriteString
- 00000202  A1 00000107 R		MOV		EAX, result_5
- 00000207  E8 00000000 E		CALL	WriteDec
- 0000020C  E8 00000000 E		CALL	CrLf
+ 0000020B  A1 000000E3 R		MOV		EAX, secondNumber
+ 00000210  E8 00000000 E		CALL	WriteDec
+ 00000215  BA 000000EB R		MOV		EDX, OFFSET		prompt_plus
+ 0000021A  E8 00000000 E		CALL	WriteString
+ 0000021F  A1 000000E7 R		MOV		EAX, thirdNumber
+ 00000224  E8 00000000 E		CALL	WriteDec
+ 00000229  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
+ 0000022E  E8 00000000 E		CALL	WriteString
+ 00000233  A1 00000107 R		MOV		EAX, result_5
+ 00000238  E8 00000000 E		CALL	WriteDec
+ 0000023D  E8 00000000 E		CALL	CrLf
 
 					; (6) B - C = result_6: subtract the second and third numbers
- 00000211  A1 000000E3 R		MOV		EAX, secondNumber
- 00000216  E8 00000000 E		CALL	WriteDec
- 0000021B  BA 000000EF R		MOV		EDX, OFFSET		prompt_minus
- 00000220  E8 00000000 E		CALL	WriteString
- 00000225  A1 000000E7 R		MOV		EAX, thirdNumber
- 0000022A  E8 00000000 E		CALL	WriteDec
- 0000022F  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
- 00000234  E8 00000000 E		CALL	WriteString
- 00000239  A1 0000010B R		MOV		EAX, result_6
- 0000023E  E8 00000000 E		CALL	WriteDec
- 00000243  E8 00000000 E		CALL	CrLf
+ 00000242  A1 000000E3 R		MOV		EAX, secondNumber
+ 00000247  E8 00000000 E		CALL	WriteDec
+ 0000024C  BA 000000EF R		MOV		EDX, OFFSET		prompt_minus
+ 00000251  E8 00000000 E		CALL	WriteString
+ 00000256  A1 000000E7 R		MOV		EAX, thirdNumber
+ 0000025B  E8 00000000 E		CALL	WriteDec
+ 00000260  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
+ 00000265  E8 00000000 E		CALL	WriteString
+ 0000026A  A1 0000010B R		MOV		EAX, result_6
+ 0000026F  E8 00000000 E		CALL	WriteDec
+ 00000274  E8 00000000 E		CALL	CrLf
 
 					; (7) A + B + C = result_7: add the first, second, and third numbers
- 00000248  A1 000000DF R		MOV		EAX, firstNumber
- 0000024D  E8 00000000 E		CALL	WriteDec
- 00000252  BA 000000EB R		MOV		EDX, OFFSET		prompt_plus
- 00000257  E8 00000000 E		CALL	WriteString
- 0000025C  A1 000000E3 R		MOV		EAX, secondNumber
- 00000261  E8 00000000 E		CALL	WriteDec
- 00000266  BA 000000EB R		MOV		EDX, OFFSET		prompt_plus
- 0000026B  E8 00000000 E		CALL	WriteString
- 00000270  A1 000000E7 R		MOV		EAX, thirdNumber
- 00000275  E8 00000000 E		CALL	WriteDec
- 0000027A  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
- 0000027F  E8 00000000 E		CALL	WriteString
- 00000284  A1 0000010F R		MOV		EAX, result_7
- 00000289  E8 00000000 E		CALL	WriteDec
- 0000028E  E8 00000000 E		CALL	CrLf
+ 00000279  A1 000000DF R		MOV		EAX, firstNumber
+ 0000027E  E8 00000000 E		CALL	WriteDec
+ 00000283  BA 000000EB R		MOV		EDX, OFFSET		prompt_plus
+ 00000288  E8 00000000 E		CALL	WriteString
+ 0000028D  A1 000000E3 R		MOV		EAX, secondNumber
+ 00000292  E8 00000000 E		CALL	WriteDec
+ 00000297  BA 000000EB R		MOV		EDX, OFFSET		prompt_plus
+ 0000029C  E8 00000000 E		CALL	WriteString
+ 000002A1  A1 000000E7 R		MOV		EAX, thirdNumber
+ 000002A6  E8 00000000 E		CALL	WriteDec
+ 000002AB  BA 000000F3 R		MOV		EDX, OFFSET		prompt_equal
+ 000002B0  E8 00000000 E		CALL	WriteString
+ 000002B5  A1 0000010F R		MOV		EAX, result_7
+ 000002BA  E8 00000000 E		CALL	WriteDec
+ 000002BF  E8 00000000 E		CALL	CrLf
 
-					; ask whether the user wants to play again
- 00000293  BA 00000180 R		MOV		EDX, OFFSET		ask			; ask prompt
- 00000298  E8 00000000 E		CALL	WriteString
- 0000029D  E8 00000000 E		CALL	ReadDec						; preconditions: None 
+					; EC#1. ask whether the user wants to play again
+ 000002C4  BA 00000180 R		MOV		EDX, OFFSET		ask			; ask prompt
+ 000002C9  E8 00000000 E		CALL	WriteString
+ 000002CE  E8 00000000 E		CALL	ReadDec						; preconditions: None 
 														; postconditions: value is saved in EAX
- 000002A2  A3 000001A9 R		MOV		response, EAX				; user response saved in "response"
- 000002A7  83 3D 000001A9 R		CMP		response, 1					
+ 000002D3  A3 000001A9 R		MOV		response, EAX				; user response saved in "response"
+ 000002D8  83 3D 000001A9 R		CMP		response, 1					
 	   01
- 000002AE  0F 84 FFFFFD79		JE		_again						; if response is 1, jump back to _again
+ 000002DF  0F 84 FFFFFD57		JE		_again						; if response is 1, jump back to _again
 
 					; 5. say goodbye
- 000002B4  BA 00000113 R		MOV		EDX, OFFSET		goodbye
- 000002B9  E8 00000000 E		CALL	WriteString
- 000002BE  E8 00000000 E		CALL	CrLF
+ 000002E5  BA 00000113 R		MOV		EDX, OFFSET		goodbye
+ 000002EA  E8 00000000 E		CALL	WriteString
+ 000002EF  E8 00000000 E		CALL	CrLF
+
+
+					; EC#2. user inputs are not in descending order 
+ 000002F4			_notDescend:
+ 000002F4  BA 000001EE R		MOV		EDX, OFFSET		desc_error	; display error message
+ 000002F9  E8 00000000 E		CALL	WriteString
+ 000002FE  BA 00000220 R		MOV		EDX, OFFSET		error_bye	; goodbye propmt
+ 00000303  E8 00000000 E		CALL	WriteString
+ 00000308  E8 00000000 E		CALL	CrLf
 
 					Invoke ExitProcess,0	; exit to operating system
- 000002C3  6A 00	   *	    push   +000000000h
- 000002C5  E8 00000000 E   *	    call   ExitProcess
- 000002CA			main ENDP
+ 0000030D  6A 00	   *	    push   +000000000h
+ 0000030F  E8 00000000 E   *	    call   ExitProcess
+ 00000314			main ENDP
 
 				; no additional procedures
 
 				END main
-Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 15:54:11
+Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 16:26:49
 <Basic Logic and Arithmetic Program     (Project1_leeginw.as  Symbols 2 - 1
 
 
@@ -453,8 +511,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 000001AD Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 000002CA Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000024A Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000314 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -561,8 +619,9 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000002CA Public STDCALL
-  _again . . . . . . . . . . . .	L Near	 0000002D _TEXT	
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000314 Public STDCALL
+  _again . . . . . . . . . . . .	L Near	 0000003C _TEXT	
+  _notDescend  . . . . . . . . .	L Near	 000002F4 _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -786,8 +845,11 @@ black  . . . . . . . . . . . . .	Number	 00000000h
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
+desc_error . . . . . . . . . . .	Byte	 000001EE _DATA	
+error_bye  . . . . . . . . . . .	Byte	 00000220 _DATA	
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
 extra_1  . . . . . . . . . . . .	Byte	 00000144 _DATA	
+extra_2  . . . . . . . . . . . .	Byte	 000001AD _DATA	
 firstNumber  . . . . . . . . . .	DWord	 000000DF _DATA	
 goodbye  . . . . . . . . . . . .	Byte	 00000113 _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   

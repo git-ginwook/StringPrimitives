@@ -16,6 +16,9 @@ TITLE Basic Logic and Arithmetic Program     (Project1_leeginw.asm)
 ;	Extra Credit: 
 ;		1) before the closing remark, user will be asked whether to play this program again.
 ;			- the program will repeat until the user chooses to quit.
+;		2) when user inputs the second and third numbers, program checks to see 
+;			if A is less than B, or B is less than C, sequentially.
+;			if "yes" in either case, the program jumps to descending error message and ends the program.
 
 INCLUDE Irvine32.inc
 
@@ -57,10 +60,14 @@ INCLUDE Irvine32.inc
 	goodbye			BYTE	"Thanks for using Elementary Arithmetic! Goodbye!",0
 
 	; Extra Credit #1
-	extra_1			BYTE	"**EC: repeat this program until the user chooses to quit.",13,10,0
+	extra_1			BYTE	"**EC#1: repeat this program until the user chooses to quit.",0
 	ask				BYTE	"play again? (Yes: press 1, No: press 0) ",0
-	
 	response		DWORD	?		; 1 = play again, 0 = exit
+
+	; Extra Credit #2
+	extra_2			BYTE	"**EC#2: check if numbers are not in strictly descending order.",13,10,0
+	desc_error		BYTE	"ERROR: The numbers are not in descending order!",13,10,0
+	error_bye		BYTE	"Please stick to the rules next time. Bye!",0
 
 .code
 main PROC
@@ -71,6 +78,10 @@ main PROC
 	CALL	CrLf
 	
 	MOV		EDX, OFFSET		extra_1			; extra credit #1 description
+	CALL	WriteString
+	CALL	CrLf
+
+	MOV		EDX, OFFSET		extra_2			; extra credit #2 description
 	CALL	WriteString
 	CALL	CrLf
 
@@ -98,6 +109,11 @@ _again:
 											; postconditions: value is saved in EAX
 	MOV		secondNumber, EAX				; value is saved in secondNumber
 
+	; EC#2. check if the first number is greater than the second number
+	MOV		EAX, firstNumber
+	CMP		EAX, secondNumber
+	JB		_notDescend						; jump to notDescend label if firstNumber < secondNumber
+
 	; (3) get the third number(C) from user
 	MOV		EDX, OFFSET		prompt_4		; input request
 	CALL	WriteString						
@@ -105,9 +121,12 @@ _again:
 											; postconditions: value is saved in EAX
 	MOV		thirdNumber, EAX				; value is saved in thirdNumber
 
+	; EC#2. check if the second number is greater than the third number
+	MOV		EAX, secondNumber
+	CMP		EAX, thirdNumber
+	JB		_notDescend						; jump to notDescend label if secondNumber < thirdNumber
 
 	; 3. calculate the required values
-
 	; (1) add the first and second numbers: A + B
 	MOV		EAX, firstNumber
 	MOV		EBX, secondNumber
@@ -152,8 +171,7 @@ _again:
 	ADD		EAX, EBX
 	MOV		result_7, EAX					; store the result of addition in result_7
 
-	; 4. display the results 
-	
+	; 4. display the results 	
 	; (1) A + B = result_1: add the first and second numbers
 	MOV		EAX, firstNumber
 	CALL	WriteDec
@@ -249,7 +267,7 @@ _again:
 	CALL	WriteDec
 	CALL	CrLf
 
-	; ask whether the user wants to play again
+	; EC#1. ask whether the user wants to play again
 	MOV		EDX, OFFSET		ask			; ask prompt
 	CALL	WriteString
 	CALL	ReadDec						; preconditions: None 
@@ -262,6 +280,15 @@ _again:
 	MOV		EDX, OFFSET		goodbye
 	CALL	WriteString
 	CALL	CrLF
+
+
+	; EC#2. user inputs are not in descending order 
+_notDescend:
+	MOV		EDX, OFFSET		desc_error	; display error message
+	CALL	WriteString
+	MOV		EDX, OFFSET		error_bye	; goodbye propmt
+	CALL	WriteString
+	CALL	CrLf
 
 	Invoke ExitProcess,0	; exit to operating system
 main ENDP
