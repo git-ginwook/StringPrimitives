@@ -13,7 +13,9 @@ TITLE Basic Logic and Arithmetic Program     (Project1_leeginw.asm)
 ;	The program takes three integers and calculates the sums and differences in a particular order:
 ;		[A+B, A-B, A+C, A-C, B+C, B-C, A+B+C]
 ;	Once, all calculations are displayed, there will be a closing remark with a good bye.
-
+;	Extra Credit: 
+;		1) before the closing remark, user will be asked whether to play this program again.
+;			- the program will repeat until the user chooses to quit.
 
 INCLUDE Irvine32.inc
 
