@@ -54,6 +54,12 @@ INCLUDE Irvine32.inc
 	; closing comment
 	goodbye			BYTE	"Thanks for using Elementary Arithmetic! Goodbye!",0
 
+	; Extra Credit #1
+	extra_1			BYTE	"**EC: repeat this program until the user chooses to quit.",13,10,0
+	ask				BYTE	"play again? (Yes: press 1, No: press 0) ",0
+	
+	response		DWORD	?		; 1 = play again, 0 = exit
+
 .code
 main PROC
 
@@ -61,10 +67,16 @@ main PROC
 	MOV		EDX, OFFSET		intro_1			; program title and name
 	CALL	WriteString
 	CALL	CrLf
+	
+	MOV		EDX, OFFSET		extra_1			; extra credit #1 description
+	CALL	WriteString
+	CALL	CrLf
+
 	MOV		EDX, OFFSET		intro_2			; program description
 	CALL	WriteString
 	CALL	CrLf
 
+_again:
 	; 2. get the data (from user)
 	MOV		EDX, OFFSET		prompt_1		; instruction for user
 	CALL	WriteString
@@ -234,6 +246,15 @@ main PROC
 	MOV		EAX, result_7
 	CALL	WriteDec
 	CALL	CrLf
+
+	; ask whether the user wants to play again
+	MOV		EDX, OFFSET		ask			; ask prompt
+	CALL	WriteString
+	CALL	ReadDec						; preconditions: None 
+										; postconditions: value is saved in EAX
+	MOV		response, EAX				; user response saved in "response"
+	CMP		response, 1					
+	JE		_again						; if response is 1, jump back to _again
 
 	; 5. say goodbye
 	MOV		EDX, OFFSET		goodbye
