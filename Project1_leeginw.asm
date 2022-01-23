@@ -364,6 +364,7 @@ _again:
 	CALL	CrLf
 
 	; EC#1. ask whether the user wants to play again
+_ask:
 	MOV		EDX, OFFSET		ask			; ask prompt
 	CALL	WriteString
 	CALL	ReadDec						; preconditions: None 
@@ -385,6 +386,7 @@ _notDescend:
 	MOV		EDX, OFFSET		error_bye	; goodbye propmt
 	CALL	WriteString
 	CALL	CrLf
+	JMP		_ask						; ask if user wants to continue play
 
 _end:
 	Invoke ExitProcess,0	; exit to operating system

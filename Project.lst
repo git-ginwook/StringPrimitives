@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 17:04:00
+Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 17:13:05
 <Basic Logic and Arithmetic Program     (Project1_leeginw.as  Page 1 - 1
 
 
@@ -316,25 +316,25 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 17:04:00
  00000137  03 C3			ADD		EAX, EBX
  00000139  A3 0000010F R		MOV		result_7, EAX					; store the result of addition in result_7
 
-					; (8) subtract the second and first numbers: B - A
+					; EC#3. (8) subtract the second and first numbers: B - A
  0000013E  A1 000000E3 R		MOV		EAX, secondNumber
  00000143  8B 1D 000000DF R		MOV		EBX, firstNumber
  00000149  2B C3			SUB		EAX, EBX
  0000014B  A3 0000028D R		MOV		result_8, EAX					; store the result of subtracion in result_8
 
-					; (9) subtract the third and first numbers: C - A
+					; EC#3. (9) subtract the third and first numbers: C - A
  00000150  A1 000000E7 R		MOV		EAX, thirdNumber
  00000155  8B 1D 000000DF R		MOV		EBX, firstNumber
  0000015B  2B C3			SUB		EAX, EBX
  0000015D  A3 00000291 R		MOV		result_9, EAX					; store the result of subtracion in result_9
 
-					; (10) subtract the third and second numbers: C - B
+					; EC#3. (10) subtract the third and second numbers: C - B
  00000162  A1 000000E7 R		MOV		EAX, thirdNumber
  00000167  8B 1D 000000E3 R		MOV		EBX, secondNumber
  0000016D  2B C3			SUB		EAX, EBX
  0000016F  A3 00000295 R		MOV		result_10, EAX					; store the result of subtracion in result_10
 
-					; (11) subtract the third, second, and first numbers: C - B - A
+					; EC#3. (11) subtract the third, second, and first numbers: C - B - A
  00000174  A1 000000E7 R		MOV		EAX, thirdNumber
  00000179  8B 1D 000000E3 R		MOV		EBX, secondNumber
  0000017F  2B C3			SUB		EAX, EBX
@@ -438,7 +438,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 17:04:00
  00000319  E8 00000000 E		CALL	WriteDec
  0000031E  E8 00000000 E		CALL	CrLf
 
-					; (8) B - A = result_8: subtract the second and first numbers
+					; EC#3. (8) B - A = result_8: subtract the second and first numbers
  00000323  A1 000000E3 R		MOV		EAX, secondNumber
  00000328  E8 00000000 E		CALL	WriteDec
  0000032D  BA 000000EF R		MOV		EDX, OFFSET		prompt_minus
@@ -451,7 +451,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 17:04:00
  00000350  E8 00000000 E		CALL	WriteInt
  00000355  E8 00000000 E		CALL	CrLf
 
-					; (9) C - A = result_9: subtract the third and first numbers
+					; EC#3. (9) C - A = result_9: subtract the third and first numbers
  0000035A  A1 000000E7 R		MOV		EAX, thirdNumber
  0000035F  E8 00000000 E		CALL	WriteDec
  00000364  BA 000000EF R		MOV		EDX, OFFSET		prompt_minus
@@ -464,7 +464,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 17:04:00
  00000387  E8 00000000 E		CALL	WriteInt
  0000038C  E8 00000000 E		CALL	CrLf
 
-					; (10) C - B = result_10: subtract the third and second numbers
+					; EC#3. (10) C - B = result_10: subtract the third and second numbers
  00000391  A1 000000E7 R		MOV		EAX, thirdNumber
  00000396  E8 00000000 E		CALL	WriteDec
  0000039B  BA 000000EF R		MOV		EDX, OFFSET		prompt_minus
@@ -477,7 +477,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 17:04:00
  000003BE  E8 00000000 E		CALL	WriteInt
  000003C3  E8 00000000 E		CALL	CrLf
 
-					; (11) C - B - A = result_11: subtract the third, second, and first numbers
+					; EC#3. (11) C - B - A = result_11: subtract the third, second, and first numbers
  000003C8  A1 000000E7 R		MOV		EAX, thirdNumber
  000003CD  E8 00000000 E		CALL	WriteDec
  000003D2  BA 000000EF R		MOV		EDX, OFFSET		prompt_minus
@@ -495,6 +495,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 17:04:00
  0000040E  E8 00000000 E		CALL	CrLf
 
 					; EC#1. ask whether the user wants to play again
+ 00000413			_ask:
  00000413  BA 00000180 R		MOV		EDX, OFFSET		ask			; ask prompt
  00000418  E8 00000000 E		CALL	WriteString
  0000041D  E8 00000000 E		CALL	ReadDec						; preconditions: None 
@@ -508,7 +509,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 17:04:00
  00000434  BA 00000113 R		MOV		EDX, OFFSET		goodbye
  00000439  E8 00000000 E		CALL	WriteString
  0000043E  E8 00000000 E		CALL	CrLF
- 00000443  EB 19			JMP		_end
+ 00000443  EB 1B			JMP		_end
 
 					; EC#2. user inputs are not in descending order 
  00000445			_notDescend:
@@ -517,17 +518,18 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 17:04:00
  0000044F  BA 0000021E R		MOV		EDX, OFFSET		error_bye	; goodbye propmt
  00000454  E8 00000000 E		CALL	WriteString
  00000459  E8 00000000 E		CALL	CrLf
+ 0000045E  EB B3			JMP		_ask						; ask if user wants to continue play
 
- 0000045E			_end:
+ 00000460			_end:
 					Invoke ExitProcess,0	; exit to operating system
- 0000045E  6A 00	   *	    push   +000000000h
- 00000460  E8 00000000 E   *	    call   ExitProcess
- 00000465			main ENDP
+ 00000460  6A 00	   *	    push   +000000000h
+ 00000462  E8 00000000 E   *	    call   ExitProcess
+ 00000467			main ENDP
 
 				; no additional procedures
 
 				END main
-Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 17:04:00
+Microsoft (R) Macro Assembler Version 14.29.30138.0	    01/23/22 17:13:05
 <Basic Logic and Arithmetic Program     (Project1_leeginw.as  Symbols 2 - 1
 
 
@@ -622,7 +624,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 0000029D Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000465 Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000467 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -729,10 +731,11 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000465 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000467 Public STDCALL
   _again . . . . . . . . . . . .	L Near	 0000004B _TEXT	
+  _ask . . . . . . . . . . . . .	L Near	 00000413 _TEXT	
   _notDescend  . . . . . . . . .	L Near	 00000445 _TEXT	
-  _end . . . . . . . . . . . . .	L Near	 0000045E _TEXT	
+  _end . . . . . . . . . . . . .	L Near	 00000460 _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
