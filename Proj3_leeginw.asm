@@ -26,10 +26,10 @@ HIGH_BOUND		=	-1
 	ask_name				BYTE		"What is your name? ",0
 	msg_greet				BYTE		"Hello there, ",0
 	
-	instruction_1			BYTE		"Please enter numbers in [-200, -100] or [-50, -1].",13,10,0
-	instruction_2			BYTE		"Enter a non-negative number when you are finished to see results.",13,10,0
+	instruction_1			BYTE		"Please enter integer numbers in [-200, -100] or [-50, -1].",13,10,0
+	instruction_2			BYTE		"Enter a non-negative integer when you are finished to see results.",13,10,0
 
-	ask_val					BYTE		"Enter number: ",0
+	ask_val					BYTE		"Enter integer: ",0
 
 	msg_error				BYTE		"Number Invalid!",13,10,0
 	msg_zeroValid			BYTE		"There is no valid input.",13,10,0
@@ -38,13 +38,13 @@ HIGH_BOUND		=	-1
 	
 	; user inputs
 	user_name				BYTE		33 DUP(0)
-	
+
 	; result variables
 	count					SDWORD		?
 	sum						SDWORD		?
 	avg						SDWORD		?
-	min						SDWORD		-1					; highest value within the valid number range
-	max						SDWORD		-200				; lowest value within the valid number range
+	min						SDWORD		?					; highest value within the valid number range
+	max						SDWORD		?					; lowest value within the valid number range
 
 	; result messages
 	msg_count_1				BYTE		"You entered ",0
@@ -122,12 +122,20 @@ _invalid:
 
 	;	c. count and accumulate the valid user numbers
 _valid:
-	
 	INC		count							; increase valid number count by 1
 	ADD		sum, EAX						; accumulate the valid numbers
 	
 	;	d. set min and max values among valid user numbers	
+	CMP		count, 1
+	JE		_initial						; if the input is the first valid number, jump to _initial
+	JMP		_minmax							; if not, jump to _minmax
 
+_initial:
+	MOV		min, EAX						; set the first valid number as min
+	MOV		max, EAX						; set the first valid number as max
+	JMP		_input
+
+_minmax:
 	CMP		EAX, min
 	JL		_changeMin						; if the valid input is less than the current min, jump to _changeMin
 	JMP		_max							; if not, keep the current min
@@ -208,14 +216,14 @@ _display:
 	;	c. maximum valid user value entered
 	MOV		EDX, OFFSET		msg_max
 	CALL	WriteString
-	MOV		EAX, sum
+	MOV		EAX, max
 	CALL	WriteInt
 	Call	CrLf
 
 	;	d. minimum valid user value entered
 	MOV		EDX, OFFSET		msg_min
 	CALL	WriteString
-	MOV		EAX, sum
+	MOV		EAX, min
 	CALL	WriteInt
 	Call	CrLf
 
