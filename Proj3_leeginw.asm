@@ -11,8 +11,9 @@ TITLE Integer Accumulator      (project3_leeginw.asm)
 ;				Once user enters a non-negative integers, zero or above, the program switches to the
 ;				calculate-and-display mode. User will be able to see the maximum, minimum, sum, and average of 
 ;				the valid inputs they put in.
-;				Extra Cerdits:
-;					1) Number the lines during user input. Increment the line number only for valid number entries
+;				**Extra Cerdits:
+;					1) Display line numbers during user inputs and increment the numbers only for valid entries
+;					2) Round to the nearest hundredth decimal point (e.g., 0.01) without the Floating Point Unit
 
 INCLUDE Irvine32.inc
 
@@ -30,7 +31,7 @@ HIGH_BOUND		=	-1
 	msg_welcome				BYTE		"Welcome to the Integer Accumulator by GinWook Lee",13,10,0
 	
 	ask_name				BYTE		13,10,"What is your name? ",0
-	msg_greet				BYTE		"Hello there, ",0
+	msg_greet				BYTE		13,10,"Hello there, ",0
 	
 	instruction_1			BYTE		"Please enter integer numbers in [-200, -100] or [-50, -1].",13,10,0
 	instruction_2			BYTE		"Enter a non-negative integer when you are finished to see results.",13,10,0
@@ -48,7 +49,7 @@ HIGH_BOUND		=	-1
 	; result variables
 	count					SDWORD		?
 	sum						SDWORD		?
-	avg						SDWORD		?
+	quotient1				SDWORD		?
 	min						SDWORD		?
 	max						SDWORD		?
 
@@ -56,17 +57,25 @@ HIGH_BOUND		=	-1
 	msg_count_1				BYTE		"You entered ",0
 	msg_count_2				BYTE		" valid numbers.",0
 	msg_sum					BYTE		"The sum of your valid numbers is ",0
-	msg_avg					BYTE		"The rounded (to the nearest integer) average is ",0
+	msg_avg1				BYTE		"The rounded (to the nearest integer) average is ",0
 	msg_max					BYTE		"The maximum valid number is ",0
 	msg_min					BYTE		"The minimum valid number is ",0
 
-	; [Extra Credit #1] prompt
-	
-	extra_1					BYTE		13,10,"**EC#1: Each user input will be numbered and displayed on the prompt."
-							BYTE		13,10,"**And the line number increases only after a valid input.",13,10,0
+	; [Extra Credit #1] prompt and variables
+	extra_1					BYTE		13,10,"**EC#1: Each user input will be numbered. "
+							BYTE		"And the line number increases only after a valid input.",13,10,0
 	
 	line_number				DWORD		1
 	ask_val_line			BYTE		". ",0
+
+	; [Extra Credit #2] prompts and variables
+	extra_2					BYTE		"**EC#2: The second average will be displayed to the nearest hundredth decimal point.",13,10,0
+	msg_avg2				BYTE		"The rounded (to the nearest hundredth) average is ",0
+	dec_point				BYTE		".",0
+	tenth					BYTE		"0",0
+
+	quotient2				SDWORD		?
+	decimal					DWORD		?
 
 .code
 main PROC
@@ -77,7 +86,11 @@ main PROC
 
 	; [EC#1] display description for the extra credit #1
 	MOV		EDX, OFFSET		extra_1
-	CALL	WriteString
+	CALL	WriteString							; prompt for extra credit #1
+
+	; [EC#2] display description for the extra credit #2
+	MOV		EDX, OFFSET		extra_2
+	CALL	WriteString							; prompt for extra credit #2
 
 	; 2. get the user's name, and greet the user
 	MOV		EDX, OFFSET		ask_name
@@ -104,20 +117,21 @@ _instruction:
 
 	; -------------------------------------------------------------
 	; 4. repeatedly prompt the user to enter a number
+	;	[EC#1] display line numbers for user inputs
 	;	a. validate the user input to be in [-200, -100] or [-50, -1] inclusive
 	;	b. notify the user of any invalid negative numbers (negative but not in range)
 	;	c. count and accumulate the valid user numbers (until a non-negative number)
 	;	d. set min and max values among valid user numbers
 	; -------------------------------------------------------------
 
-	;	a. validate the user input
-_input:
 	;	[EC#1] display the line number
+_input:
 	MOV		EAX, line_number
 	CALL	WriteDec						; display line_number
 	MOV		EDX, OFFSET		ask_val_line
 	CALL	WriteString						; ". "
-	
+
+	;	a. validate the user input	
 	MOV		EDX, OFFSET		ask_val
 	CALL	WriteString						; "Enter integer: "
 	CALL	ReadInt							; get user integer in EAX
@@ -184,6 +198,7 @@ _changeMax:
 	;			i. If none, skip to _zeroValid followed by _goodbye
 	;		b. divide sum by count to get the quotient
 	;		c. round the quotient up or down based on the remainder
+	;		[EC#2] calculate the second average rounded to the nearest hundredth decimal point
 	; -------------------------------------------------------------
 
 	;	a. check if there is at least one valid number
@@ -202,14 +217,31 @@ _average:
 	MOV		EAX, sum
 	CDQ
 	IDIV	count
-	MOV		avg, EAX						; store the quotient in avg
+	MOV		quotient1, EAX					; store the quotient in quotient1
+	
+	;	[EC#2] store the quotient for the second calculation for average
+	MOV		quotient2, EAX					; store the quotient in quotient2
 
 	;	c. round the quotient up or down based on the remainder
-	IMUL	EAX, EDX, -2					; remiander * -2 
+	IMUL	EAX, EDX, -2					; remainder * -2 
 	CMP		EAX, count						
-	JLE		_display						; if (remainder * -2) <= divisor: round up [e.g., -20.5 to -20]
+	JLE		_anotherAverage					; if (remainder * -2) <= divisor: round up [e.g., -20.5 to -20]
 
-	DEC		avg								; if (remainder * -2) > divisor: round down [e.g., -20.51 to -21]
+	DEC		quotient1						; if (remainder * -2) > divisor: round down [e.g., -20.51 to -21]
+
+	;	[EC#2] calculate another average rounded to the nearest hundredth
+_anotherAverage:
+	IMUL	EAX, EDX, -100					; remainder * -100
+	CDQ
+	IDIV	count							; divide by count (divisor)
+	MOV		decimal, EAX
+	
+	;	[EC#2] round up or down based on the remainder
+	IMUL	EAX, EDX, 2						; remainder * 2 
+	CMP		EAX, count						
+	JLE		_display						; if (remainder * 2) <= divisor: round down [e.g., 20.5 to 20]
+
+	INC		decimal							; if (remainder * 2) > divisor: round up [e.g., 20.51 to 21]
 
 	; -------------------------------------------------------------
 	; 6. display:
@@ -254,11 +286,36 @@ _display:
 	Call	CrLf
 
 	;	e. average of valid numbers (rounded to the nearest integer)
-	MOV		EDX, OFFSET		msg_avg
+	MOV		EDX, OFFSET		msg_avg1
 	CALL	WriteString						; "The rounded (to the nearest integer) average is "
-	MOV		EAX, avg
-	CALL	WriteInt						; display avg
+	MOV		EAX, quotient1
+	CALL	WriteInt						; display quotient1
 	Call	CrLf
+
+	;	[EC#2] average of valid numbers (rounded to the nearest hundredth)
+	MOV		EDX, OFFSET		msg_avg2
+	CALL	WriteString						; "The rounded (to the nearest hundredth) average is "
+	
+	MOV		EAX, quotient2
+	CALL	WriteInt						; display quotient2
+	MOV		EDX, OFFSET		dec_point
+	CALL	WriteString						; "."
+	
+	
+	CMP		decimal, 10						; check if decimal is smaller than 10
+	JL		_append							; if decimal < 10, jump to _append
+	
+	MOV		EAX, decimal
+	CALL	WriteDec						; display decimal
+	CALL	CrLf
+	JMP		_goodbye
+
+_append:
+	MOV		EDX, OFFSET		tenth
+	CALL	WriteString						; "0" append zero in the tenth decimal
+	MOV		EAX, decimal
+	CALL	WriteDec						; display decimal
+	CALL	CrLF
 
 	;	f. parting message with the user name
 _goodbye:
