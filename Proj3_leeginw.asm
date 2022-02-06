@@ -10,7 +10,9 @@ TITLE Integer Accumulator      (project3_leeginw.asm)
 ;				The program validates user inputs to check whether the inputs are within the specified ranges.
 ;				Once user enters a non-negative integers, zero or above, the program switches to the
 ;				calculate-and-display mode. User will be able to see the maximum, minimum, sum, and average of 
-;				the valid inputs they put in. 
+;				the valid inputs they put in.
+;				Extra Cerdits:
+;					1) Number the lines during user input. Increment the line number only for valid number entries
 
 INCLUDE Irvine32.inc
 
@@ -27,7 +29,7 @@ HIGH_BOUND		=	-1
 	; messages
 	msg_welcome				BYTE		"Welcome to the Integer Accumulator by GinWook Lee",13,10,0
 	
-	ask_name				BYTE		"What is your name? ",0
+	ask_name				BYTE		13,10,"What is your name? ",0
 	msg_greet				BYTE		"Hello there, ",0
 	
 	instruction_1			BYTE		"Please enter integer numbers in [-200, -100] or [-50, -1].",13,10,0
@@ -58,13 +60,25 @@ HIGH_BOUND		=	-1
 	msg_max					BYTE		"The maximum valid number is ",0
 	msg_min					BYTE		"The minimum valid number is ",0
 
+	; [Extra Credit #1] prompt
+	
+	extra_1					BYTE		13,10,"**EC#1: Each user input will be numbered and displayed on the prompt."
+							BYTE		13,10,"**And the line number increases only after a valid input.",13,10,0
+	
+	line_number				DWORD		1
+	ask_val_line			BYTE		". ",0
+
 .code
 main PROC
 
 	; 1. display the program title and programmer's name
 	MOV		EDX, OFFSET		msg_welcome	
 	CALL	WriteString							; "Welcome to the Integer Accumulator by GinWook Lee"
-	
+
+	; [EC#1] display description for the extra credit #1
+	MOV		EDX, OFFSET		extra_1
+	CALL	WriteString
+
 	; 2. get the user's name, and greet the user
 	MOV		EDX, OFFSET		ask_name
 	CALL	WriteString							; "What is your name? "
@@ -98,6 +112,12 @@ _instruction:
 
 	;	a. validate the user input
 _input:
+	;	[EC#1] display the line number
+	MOV		EAX, line_number
+	CALL	WriteDec						; display line_number
+	MOV		EDX, OFFSET		ask_val_line
+	CALL	WriteString						; ". "
+	
 	MOV		EDX, OFFSET		ask_val
 	CALL	WriteString						; "Enter integer: "
 	CALL	ReadInt							; get user integer in EAX
@@ -127,6 +147,8 @@ _invalid:
 	;	c. count and accumulate the valid user numbers
 _valid:
 	INC		count							; increase valid number count by 1
+	;	[EC#1] increment the line number only for valid entries
+	INC		line_number						; increase line number by 1
 	ADD		sum, EAX						; accumulate the valid numbers
 	
 	;	d. set min and max values among valid user numbers	

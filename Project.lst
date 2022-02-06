@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 09:48:28
+Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 10:34:36
 /Integer Accumulator      (project3_leeginw.asm		     Page 1 - 1
 
 
@@ -14,7 +14,9 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 09:48:28
 				;				The program validates user inputs to check whether the inputs are within the specified ranges.
 				;				Once user enters a non-negative integers, zero or above, the program switches to the
 				;				calculate-and-display mode. User will be able to see the maximum, minimum, sum, and average of 
-				;				the valid inputs they put in. 
+				;				the valid inputs they put in.
+				;				Extra Cerdits:
+				;					1) Number the lines during user input. Increment the line number only for valid number entries
 
 				INCLUDE Irvine32.inc
 			      C ; Include file for Irvine32.lib             (Irvine32.inc)
@@ -58,15 +60,16 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 09:48:28
 	   20 4C 65 65 0D
 	   0A 00
 					
- 00000034 57 68 61 74 20		ask_name				BYTE		"What is your name? ",0
-	   69 73 20 79 6F
-	   75 72 20 6E 61
-	   6D 65 3F 20 00
- 00000048 48 65 6C 6C 6F		msg_greet				BYTE		"Hello there, ",0
+ 00000034 0D 0A 57 68 61		ask_name				BYTE		13,10,"What is your name? ",0
+	   74 20 69 73 20
+	   79 6F 75 72 20
+	   6E 61 6D 65 3F
+	   20 00
+ 0000004A 48 65 6C 6C 6F		msg_greet				BYTE		"Hello there, ",0
 	   20 74 68 65 72
 	   65 2C 20 00
 					
- 00000056 50 6C 65 61 73		instruction_1			BYTE		"Please enter integer numbers in [-200, -100] or [-50, -1].",13,10,0
+ 00000058 50 6C 65 61 73		instruction_1			BYTE		"Please enter integer numbers in [-200, -100] or [-50, -1].",13,10,0
 	   65 20 65 6E 74
 	   65 72 20 69 6E
 	   74 65 67 65 72
@@ -79,7 +82,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 09:48:28
 	   35 30 2C 20 2D
 	   31 5D 2E 0D 0A
 	   00
- 00000093 45 6E 74 65 72		instruction_2			BYTE		"Enter a non-negative integer when you are finished to see results.",13,10,0
+ 00000095 45 6E 74 65 72		instruction_2			BYTE		"Enter a non-negative integer when you are finished to see results.",13,10,0
 	   20 61 20 6E 6F
 	   6E 2D 6E 65 67
 	   61 74 69 76 65
@@ -94,53 +97,53 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 09:48:28
 	   73 75 6C 74 73
 	   2E 0D 0A 00
 
- 000000D8 45 6E 74 65 72		ask_val					BYTE		"Enter integer: ",0
+ 000000DA 45 6E 74 65 72		ask_val					BYTE		"Enter integer: ",0
 	   20 69 6E 74 65
 	   67 65 72 3A 20
 	   00
 
- 000000E8 4E 75 6D 62 65		msg_error				BYTE		"Number Invalid!",13,10,0
+ 000000EA 4E 75 6D 62 65		msg_error				BYTE		"Number Invalid!",13,10,0
 	   72 20 49 6E 76
 	   61 6C 69 64 21
 	   0D 0A 00
- 000000FA 54 68 65 72 65		msg_zeroValid			BYTE		"There is no valid input.",13,10,0
+ 000000FC 54 68 65 72 65		msg_zeroValid			BYTE		"There is no valid input.",13,10,0
 	   20 69 73 20 6E
 	   6F 20 76 61 6C
 	   69 64 20 69 6E
 	   70 75 74 2E 0D
 	   0A 00
 
- 00000115 47 6F 6F 64 62		msg_goodbye				BYTE		"Goodbye, ",0
+ 00000117 47 6F 6F 64 62		msg_goodbye				BYTE		"Goodbye, ",0
 	   79 65 2C 20 00
 					
 					; user inputs
- 0000011F  00000021 [			user_name				BYTE		33 DUP(0)
+ 00000121  00000021 [			user_name				BYTE		33 DUP(0)
 	    00
 	   ]
 
 					; result variables
- 00000140 00000000			count					SDWORD		?
- 00000144 00000000			sum						SDWORD		?
- 00000148 00000000			avg						SDWORD		?
- 0000014C 00000000			min						SDWORD		?
- 00000150 00000000			max						SDWORD		?
+ 00000142 00000000			count					SDWORD		?
+ 00000146 00000000			sum						SDWORD		?
+ 0000014A 00000000			avg						SDWORD		?
+ 0000014E 00000000			min						SDWORD		?
+ 00000152 00000000			max						SDWORD		?
 
 					; result messages
- 00000154 59 6F 75 20 65		msg_count_1				BYTE		"You entered ",0
+ 00000156 59 6F 75 20 65		msg_count_1				BYTE		"You entered ",0
 	   6E 74 65 72 65
 	   64 20 00
- 00000161 20 76 61 6C 69		msg_count_2				BYTE		" valid numbers.",0
+ 00000163 20 76 61 6C 69		msg_count_2				BYTE		" valid numbers.",0
 	   64 20 6E 75 6D
 	   62 65 72 73 2E
 	   00
- 00000171 54 68 65 20 73		msg_sum					BYTE		"The sum of your valid numbers is ",0
+ 00000173 54 68 65 20 73		msg_sum					BYTE		"The sum of your valid numbers is ",0
 	   75 6D 20 6F 66
 	   20 79 6F 75 72
 	   20 76 61 6C 69
 	   64 20 6E 75 6D
 	   62 65 72 73 20
 	   69 73 20 00
- 00000193 54 68 65 20 72		msg_avg					BYTE		"The rounded (to the nearest integer) average is ",0
+ 00000195 54 68 65 20 72		msg_avg					BYTE		"The rounded (to the nearest integer) average is ",0
 	   6F 75 6E 64 65
 	   64 20 28 74 6F
 	   20 74 68 65 20
@@ -150,48 +153,89 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 09:48:28
 	   29 20 61 76 65
 	   72 61 67 65 20
 	   69 73 20 00
- 000001C4 54 68 65 20 6D		msg_max					BYTE		"The maximum valid number is ",0
+ 000001C6 54 68 65 20 6D		msg_max					BYTE		"The maximum valid number is ",0
 	   61 78 69 6D 75
 	   6D 20 76 61 6C
 	   69 64 20 6E 75
 	   6D 62 65 72 20
 	   69 73 20 00
- 000001E1 54 68 65 20 6D		msg_min					BYTE		"The minimum valid number is ",0
+ 000001E3 54 68 65 20 6D		msg_min					BYTE		"The minimum valid number is ",0
 	   69 6E 69 6D 75
 	   6D 20 76 61 6C
 	   69 64 20 6E 75
 	   6D 62 65 72 20
 	   69 73 20 00
 
+					; Extra Credit #1
+					
+ 00000200 0D 0A 2A 2A 45		extra_1					BYTE		13,10,"**EC#1: Each user input will be numbered and displayed on the prompt."
+	   43 23 31 3A 20
+	   45 61 63 68 20
+	   75 73 65 72 20
+	   69 6E 70 75 74
+	   20 77 69 6C 6C
+	   20 62 65 20 6E
+	   75 6D 62 65 72
+	   65 64 20 61 6E
+	   64 20 64 69 73
+	   70 6C 61 79 65
+	   64 20 6F 6E 20
+	   74 68 65 20 70
+	   72 6F 6D 70 74
+	   2E
+ 00000247  0D 0A 2A 2A 41								BYTE		13,10,"**And the line number increases only after a valid input.",13,10,0
+	   6E 64 20 74 68
+	   65 20 6C 69 6E
+	   65 20 6E 75 6D
+	   62 65 72 20 69
+	   6E 63 72 65 61
+	   73 65 73 20 6F
+	   6E 6C 79 20 61
+	   66 74 65 72 20
+	   61 20 76 61 6C
+	   69 64 20 69 6E
+	   70 75 74 2E 0D
+	   0A 00
+					
+ 00000285 00000001			line_number				DWORD		1
+ 00000289 2E 20 00			ask_val_line			BYTE		". ",0
+
+
+
+
  00000000			.code
  00000000			main PROC
 
 					; 1. display the program title and programmer's name
  00000000  BA 00000000 R		MOV		EDX, OFFSET		msg_welcome	
- 00000005  E8 00000000 E		CALL	WriteString
-					
-					; 2. get the user's name, and greet the user
- 0000000A  BA 00000034 R		MOV		EDX, OFFSET		ask_name
- 0000000F  E8 00000000 E		CALL	WriteString
-					
- 00000014  BA 0000011F R		MOV		EDX, OFFSET		user_name
- 00000019  B9 00000020			MOV		ECX, 32
- 0000001E  E8 00000000 E		CALL	ReadString
+ 00000005  E8 00000000 E		CALL	WriteString							; "Welcome to the Integer Accumulator by GinWook Lee"
 
- 00000023  BA 00000048 R		MOV		EDX, OFFSET		msg_greet
- 00000028  E8 00000000 E		CALL	WriteString
- 0000002D  BA 0000011F R		MOV		EDX, OFFSET		user_name
- 00000032  E8 00000000 E		CALL	WriteString
- 00000037  E8 00000000 E		CALL	CrLf
- 0000003C  E8 00000000 E		CALL	CrLf
+					; [EC#1] display description for the extra credit #1
+ 0000000A  BA 00000200 R		MOV		EDX, OFFSET		extra_1
+ 0000000F  E8 00000000 E		CALL	WriteString
+
+					; 2. get the user's name, and greet the user
+ 00000014  BA 00000034 R		MOV		EDX, OFFSET		ask_name
+ 00000019  E8 00000000 E		CALL	WriteString							; "What is your name? "
+					
+ 0000001E  BA 00000121 R		MOV		EDX, OFFSET		user_name
+ 00000023  B9 00000020			MOV		ECX, 32
+ 00000028  E8 00000000 E		CALL	ReadString							; save user_name
+
+ 0000002D  BA 0000004A R		MOV		EDX, OFFSET		msg_greet
+ 00000032  E8 00000000 E		CALL	WriteString							; "Hello there, "
+ 00000037  BA 00000121 R		MOV		EDX, OFFSET		user_name
+ 0000003C  E8 00000000 E		CALL	WriteString							; display user_name
+ 00000041  E8 00000000 E		CALL	CrLf
+ 00000046  E8 00000000 E		CALL	CrLf
 
 					; 3. display instructions for the user
- 00000041			_instruction:
- 00000041  BA 00000056 R		MOV		EDX, OFFSET		instruction_1
- 00000046  E8 00000000 E		CALL	WriteString
- 0000004B  BA 00000093 R		MOV		EDX, OFFSET		instruction_2
- 00000050  E8 00000000 E		CALL	WriteString
- 00000055  E8 00000000 E		CALL	CrLf
+ 0000004B			_instruction:
+ 0000004B  BA 00000058 R		MOV		EDX, OFFSET		instruction_1
+ 00000050  E8 00000000 E		CALL	WriteString							; "Please enter integer numbers in [-200, -100] or [-50, -1]."
+ 00000055  BA 00000095 R		MOV		EDX, OFFSET		instruction_2
+ 0000005A  E8 00000000 E		CALL	WriteString							;"Enter a non-negative integer when you are finished to see results."
+ 0000005F  E8 00000000 E		CALL	CrLf
 
 					; -------------------------------------------------------------
 					; 4. repeatedly prompt the user to enter a number
@@ -202,65 +246,73 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 09:48:28
 					; -------------------------------------------------------------
 
 					;	a. validate the user input
- 0000005A			_input:
- 0000005A  BA 000000D8 R		MOV		EDX, OFFSET		ask_val
- 0000005F  E8 00000000 E		CALL	WriteString
- 00000064  E8 00000000 E		CALL	ReadInt							; get user integer in EAX
+ 00000064			_input:
+					;	[EC#1] display the line number
+ 00000064  A1 00000285 R		MOV		EAX, line_number
+ 00000069  E8 00000000 E		CALL	WriteDec						; display line_number
+ 0000006E  BA 00000289 R		MOV		EDX, OFFSET		ask_val_line
+ 00000073  E8 00000000 E		CALL	WriteString						; ". "
 					
- 00000069  8B D8			MOV		EBX, EAX
- 0000006B  74 67			JZ		_check							; if 0; jump to _check
- 0000006D  79 65			JNS		_check							; if positive(non-negative): jump to _check
+ 00000078  BA 000000DA R		MOV		EDX, OFFSET		ask_val
+ 0000007D  E8 00000000 E	CALL	WriteString						; "Enter integer: "
+ 00000082  E8 00000000 E		CALL	ReadInt							; get user integer in EAX
+					
+ 00000087  8B D8			MOV		EBX, EAX
+ 00000089  74 73			JZ		_check							; if 0; jump to _check
+ 0000008B  79 71			JNS		_check							; if positive(non-negative): jump to _check
 
- 0000006F  3D FFFFFF38			CMP		EAX, LOW_BOUND						
- 00000074  7C 0F			JL		_invalid						; if (-infinity, -200): jump to _invalid 
+ 0000008D  3D FFFFFF38			CMP		EAX, LOW_BOUND						
+ 00000092  7C 0F			JL		_invalid						; if (-infinity, -200): jump to _invalid 
 					
- 00000076  83 F8 9C			CMP		EAX, MIDLOW_BOUND						
- 00000079  7E 16			JLE		_valid							; if [-200, -100]: jump to _valid 
+ 00000094  83 F8 9C			CMP		EAX, MIDLOW_BOUND						
+ 00000097  7E 16			JLE		_valid							; if [-200, -100]: jump to _valid 
 
- 0000007B  83 F8 CE			CMP		EAX, MIDHIGH_BOUND
- 0000007E  7C 05			JL		_invalid						; if (-100, -50): jump to _invalid	
+ 00000099  83 F8 CE			CMP		EAX, MIDHIGH_BOUND
+ 0000009C  7C 05			JL		_invalid						; if (-100, -50): jump to _invalid	
 					
- 00000080  83 F8 FF			CMP		EAX, HIGH_BOUND
- 00000083  7E 0C			JLE		_valid							; if [-50, -1]: jump to _valid
+ 0000009E  83 F8 FF			CMP		EAX, HIGH_BOUND
+ 000000A1  7E 0C			JLE		_valid							; if [-50, -1]: jump to _valid
 
 					;	b. notify the user of any invalid negative numbers
- 00000085			_invalid:
- 00000085  BA 000000E8 R		MOV		EDX, OFFSET		msg_error
- 0000008A  E8 00000000 E		CALL	WriteString
- 0000008F  EB C9			JMP		_input
+ 000000A3			_invalid:
+ 000000A3  BA 000000EA R		MOV		EDX, OFFSET		msg_error
+ 000000A8  E8 00000000 E		CALL	WriteString						; "Number Invalid!"
+ 000000AD  EB B5			JMP		_input
 
 					;	c. count and accumulate the valid user numbers
- 00000091			_valid:
- 00000091  FF 05 00000140 R		INC		count							; increase valid number count by 1
- 00000097  01 05 00000144 R		ADD		sum, EAX						; accumulate the valid numbers
+ 000000AF			_valid:
+ 000000AF  FF 05 00000142 R		INC		count							; increase valid number count by 1
+					;	[EC#1] increment the line number only for valid entries
+ 000000B5  FF 05 00000285 R		INC		line_number						; increase line number by 1
+ 000000BB  01 05 00000146 R		ADD		sum, EAX						; accumulate the valid numbers
 					
 					;	d. set min and max values among valid user numbers	
- 0000009D  83 3D 00000140 R		CMP		count, 1
+ 000000C1  83 3D 00000142 R		CMP		count, 1
 	   01
- 000000A4  74 02			JE		_initial						; if the input is the first valid number, jump to _initial
- 000000A6  EB 0C			JMP		_minmax							; if not, jump to _minmax
+ 000000C8  74 02			JE		_initial						; if the input is the first valid number, jump to _initial
+ 000000CA  EB 0C			JMP		_minmax							; if not, jump to _minmax
 
- 000000A8			_initial:
- 000000A8  A3 0000014C R		MOV		min, EAX						; set the first valid number as min
- 000000AD  A3 00000150 R		MOV		max, EAX						; set the first valid number as max
- 000000B2  EB A6			JMP		_input
+ 000000CC			_initial:
+ 000000CC  A3 0000014E R		MOV		min, EAX						; set the first valid number as min
+ 000000D1  A3 00000152 R		MOV		max, EAX						; set the first valid number as max
+ 000000D6  EB 8C			JMP		_input
 
- 000000B4			_minmax:
- 000000B4  3B 05 0000014C R		CMP		EAX, min
- 000000BA  7C 02			JL		_changeMin						; if the valid input is less than the current min, jump to _changeMin
- 000000BC  EB 05			JMP		_max							; if not, keep the current min
+ 000000D8			_minmax:
+ 000000D8  3B 05 0000014E R		CMP		EAX, min
+ 000000DE  7C 02			JL		_changeMin						; if the valid input is less than the current min, jump to _changeMin
+ 000000E0  EB 05			JMP		_max							; if not, keep the current min
 
- 000000BE			_changeMin:
- 000000BE  A3 0000014C R		MOV		min, EAX
+ 000000E2			_changeMin:
+ 000000E2  A3 0000014E R		MOV		min, EAX						; switch min
 
- 000000C3			_max:
- 000000C3  3B 05 00000150 R		CMP		EAX, max
- 000000C9  7F 02			JG		_changeMax						; if the valid input is greater than the current max, jump to _changeMax
- 000000CB  EB 8D			JMP		_input							; if not, keep the current max
+ 000000E7			_max:
+ 000000E7  3B 05 00000152 R		CMP		EAX, max
+ 000000ED  7F 05			JG		_changeMax						; if the valid input is greater than the current max, jump to _changeMax
+ 000000EF  E9 FFFFFF70			JMP		_input							; if not, keep the current max
 
- 000000CD			_changeMax:
- 000000CD  A3 00000150 R		MOV		max, EAX
- 000000D2  EB 86			JMP		_input
+ 000000F4			_changeMax:
+ 000000F4  A3 00000152 R		MOV		max, EAX						; switch max
+ 000000F9  E9 FFFFFF66			JMP		_input
 
 					; -------------------------------------------------------------
 					; 5. calculate the average (rounded) of the valid numbers and store in a variable
@@ -271,30 +323,30 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 09:48:28
 					; -------------------------------------------------------------
 
 					;	a. check if there is at least one valid number
- 000000D4			_check:
- 000000D4  83 3D 00000140 R		CMP		count, 0
+ 000000FE			_check:
+ 000000FE  83 3D 00000142 R		CMP		count, 0
 	   00
- 000000DB  75 0F			JNE		_average						; if there is at least one valid input: jump to _average
+ 00000105  75 0F			JNE		_average						; if there is at least one valid input: jump to _average
 
 					;		a.i. special message indicating that there is no valid input
- 000000DD			_zeroValid:
- 000000DD  BA 000000FA R		MOV		EDX, OFFSET		msg_zeroValid
- 000000E2  E8 00000000 E		CALL	WriteString
- 000000E7  E9 000000AE			JMP		_goodbye
+ 00000107			_zeroValid:
+ 00000107  BA 000000FC R		MOV		EDX, OFFSET		msg_zeroValid
+ 0000010C  E8 00000000 E		CALL	WriteString						; "There is no valid input."
+ 00000111  E9 000000AE			JMP		_goodbye
 
 					;	b. divide sum by count to get the quotient
- 000000EC			_average:
- 000000EC  A1 00000144 R		MOV		EAX, sum
- 000000F1  99				CDQ
- 000000F2  F7 3D 00000140 R		IDIV	count
- 000000F8  A3 00000148 R		MOV		avg, EAX						; store the quotient in avg
+ 00000116			_average:
+ 00000116  A1 00000146 R		MOV		EAX, sum
+ 0000011B  99				CDQ
+ 0000011C  F7 3D 00000142 R		IDIV	count
+ 00000122  A3 0000014A R		MOV		avg, EAX						; store the quotient in avg
 
 					;	c. round the quotient up or down based on the remainder
- 000000FD  6B C2 FE			IMUL	EAX, EDX, -2					; remiander * -2 
- 00000100  3B 05 00000140 R		CMP		EAX, count						
- 00000106  7E 06			JLE		_display						; if (remainder * -2) <= divisor: round up [e.g., -20.5 to -20]
+ 00000127  6B C2 FE			IMUL	EAX, EDX, -2					; remiander * -2 
+ 0000012A  3B 05 00000142 R		CMP		EAX, count						
+ 00000130  7E 06			JLE		_display						; if (remainder * -2) <= divisor: round up [e.g., -20.5 to -20]
 
- 00000108  FF 0D 00000148 R		DEC		avg								; if (remainder * -2) > divisor: round down [e.g., -20.51 to -21]
+ 00000132  FF 0D 0000014A R		DEC		avg								; if (remainder * -2) > divisor: round down [e.g., -20.51 to -21]
 
 					; -------------------------------------------------------------
 					; 6. display:
@@ -305,63 +357,63 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 09:48:28
 					;	e. average of valid numbers (rounded to the nearest integer)
 					;	f. parting message (with the user's name)
 					; -------------------------------------------------------------
- 0000010E			_display:
+ 00000138			_display:
 					
 					;	a. count of validated numbers entered
- 0000010E  E8 00000000 E		CALL	CrLf
- 00000113  BA 00000154 R		MOV		EDX, OFFSET		msg_count_1
- 00000118  E8 00000000 E		CALL	WriteString
- 0000011D  A1 00000140 R		MOV		EAX, count
- 00000122  E8 00000000 E		CALL	WriteDec
- 00000127  BA 00000161 R		MOV		EDX, OFFSET		msg_count_2
- 0000012C  E8 00000000 E		CALL	WriteString
- 00000131  E8 00000000 E		CALL	CrLf
+ 00000138  E8 00000000 E		CALL	CrLf
+ 0000013D  BA 00000156 R		MOV		EDX, OFFSET		msg_count_1
+ 00000142  E8 00000000 E		CALL	WriteString						; "You entered "
+ 00000147  A1 00000142 R		MOV		EAX, count
+ 0000014C  E8 00000000 E		CALL	WriteDec						; display count
+ 00000151  BA 00000163 R		MOV		EDX, OFFSET		msg_count_2
+ 00000156  E8 00000000 E		CALL	WriteString						; " valid numbers."
+ 0000015B  E8 00000000 E		CALL	CrLf
 
 					;	b. sum of valid numbers
- 00000136  BA 00000171 R		MOV		EDX, OFFSET		msg_sum
- 0000013B  E8 00000000 E		CALL	WriteString
- 00000140  A1 00000144 R		MOV		EAX, sum
- 00000145  E8 00000000 E		CALL	WriteInt
- 0000014A  E8 00000000 E		Call	CrLf
+ 00000160  BA 00000173 R		MOV		EDX, OFFSET		msg_sum
+ 00000165  E8 00000000 E		CALL	WriteString						; "The sum of your valid numbers is "
+ 0000016A  A1 00000146 R		MOV		EAX, sum
+ 0000016F  E8 00000000 E		CALL	WriteInt						; display sum
+ 00000174  E8 00000000 E		Call	CrLf
 
 					;	c. maximum valid user value entered
- 0000014F  BA 000001C4 R		MOV		EDX, OFFSET		msg_max
- 00000154  E8 00000000 E		CALL	WriteString
- 00000159  A1 00000150 R		MOV		EAX, max
- 0000015E  E8 00000000 E		CALL	WriteInt
- 00000163  E8 00000000 E		Call	CrLf
+ 00000179  BA 000001C6 R		MOV		EDX, OFFSET		msg_max
+ 0000017E  E8 00000000 E		CALL	WriteString						; "The maximum valid number is "
+ 00000183  A1 00000152 R		MOV		EAX, max
+ 00000188  E8 00000000 E		CALL	WriteInt						; display max
+ 0000018D  E8 00000000 E		Call	CrLf
 
 					;	d. minimum valid user value entered
- 00000168  BA 000001E1 R		MOV		EDX, OFFSET		msg_min
- 0000016D  E8 00000000 E		CALL	WriteString
- 00000172  A1 0000014C R		MOV		EAX, min
- 00000177  E8 00000000 E		CALL	WriteInt
- 0000017C  E8 00000000 E		Call	CrLf
+ 00000192  BA 000001E3 R		MOV		EDX, OFFSET		msg_min
+ 00000197  E8 00000000 E		CALL	WriteString						; "The minimum valid number is "
+ 0000019C  A1 0000014E R		MOV		EAX, min
+ 000001A1  E8 00000000 E		CALL	WriteInt						; display min
+ 000001A6  E8 00000000 E		Call	CrLf
 
 					;	e. average of valid numbers (rounded to the nearest integer)
- 00000181  BA 00000193 R		MOV		EDX, OFFSET		msg_avg
- 00000186  E8 00000000 E		CALL	WriteString
- 0000018B  A1 00000148 R		MOV		EAX, avg
- 00000190  E8 00000000 E		CALL	WriteInt
- 00000195  E8 00000000 E		Call	CrLf
+ 000001AB  BA 00000195 R		MOV		EDX, OFFSET		msg_avg
+ 000001B0  E8 00000000 E		CALL	WriteString						; "The rounded (to the nearest integer) average is "
+ 000001B5  A1 0000014A R		MOV		EAX, avg
+ 000001BA  E8 00000000 E		CALL	WriteInt						; display avg
+ 000001BF  E8 00000000 E		Call	CrLf
 
 					;	f. parting message with the user name
- 0000019A			_goodbye:
- 0000019A  E8 00000000 E		CALL	CrLf
- 0000019F  BA 00000115 R		MOV		EDX, OFFSET		msg_goodbye
- 000001A4  E8 00000000 E		CALL	WriteString
- 000001A9  BA 0000011F R		MOV		EDX, OFFSET		user_name
- 000001AE  E8 00000000 E		CALL	WriteString
+ 000001C4			_goodbye:
+ 000001C4  E8 00000000 E		CALL	CrLf
+ 000001C9  BA 00000117 R		MOV		EDX, OFFSET		msg_goodbye
+ 000001CE  E8 00000000 E		CALL	WriteString						; "Goodbye, "
+ 000001D3  BA 00000121 R		MOV		EDX, OFFSET		user_name
+ 000001D8  E8 00000000 E		CALL	WriteString						; display user_name
 
 					Invoke ExitProcess,0	; exit to operating system
- 000001B3  6A 00	   *	    push   +000000000h
- 000001B5  E8 00000000 E   *	    call   ExitProcess
- 000001BA			main ENDP
+ 000001DD  6A 00	   *	    push   +000000000h
+ 000001DF  E8 00000000 E   *	    call   ExitProcess
+ 000001E4			main ENDP
 
 				; (insert additional procedures here)
 
 				END main
-Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 09:48:28
+Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 10:34:36
 /Integer Accumulator      (project3_leeginw.asm		     Symbols 2 - 1
 
 
@@ -455,8 +507,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 000001FE Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 000001BA Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000028C Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000001E4 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -563,21 +615,21 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000001BA Public STDCALL
-  _instruction . . . . . . . . .	L Near	 00000041 _TEXT	
-  _input . . . . . . . . . . . .	L Near	 0000005A _TEXT	
-  _invalid . . . . . . . . . . .	L Near	 00000085 _TEXT	
-  _valid . . . . . . . . . . . .	L Near	 00000091 _TEXT	
-  _initial . . . . . . . . . . .	L Near	 000000A8 _TEXT	
-  _minmax  . . . . . . . . . . .	L Near	 000000B4 _TEXT	
-  _changeMin . . . . . . . . . .	L Near	 000000BE _TEXT	
-  _max . . . . . . . . . . . . .	L Near	 000000C3 _TEXT	
-  _changeMax . . . . . . . . . .	L Near	 000000CD _TEXT	
-  _check . . . . . . . . . . . .	L Near	 000000D4 _TEXT	
-  _zeroValid . . . . . . . . . .	L Near	 000000DD _TEXT	
-  _average . . . . . . . . . . .	L Near	 000000EC _TEXT	
-  _display . . . . . . . . . . .	L Near	 0000010E _TEXT	
-  _goodbye . . . . . . . . . . .	L Near	 0000019A _TEXT	
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000001E4 Public STDCALL
+  _instruction . . . . . . . . .	L Near	 0000004B _TEXT	
+  _input . . . . . . . . . . . .	L Near	 00000064 _TEXT	
+  _invalid . . . . . . . . . . .	L Near	 000000A3 _TEXT	
+  _valid . . . . . . . . . . . .	L Near	 000000AF _TEXT	
+  _initial . . . . . . . . . . .	L Near	 000000CC _TEXT	
+  _minmax  . . . . . . . . . . .	L Near	 000000D8 _TEXT	
+  _changeMin . . . . . . . . . .	L Near	 000000E2 _TEXT	
+  _max . . . . . . . . . . . . .	L Near	 000000E7 _TEXT	
+  _changeMax . . . . . . . . . .	L Near	 000000F4 _TEXT	
+  _check . . . . . . . . . . . .	L Near	 000000FE _TEXT	
+  _zeroValid . . . . . . . . . .	L Near	 00000107 _TEXT	
+  _average . . . . . . . . . . .	L Near	 00000116 _TEXT	
+  _display . . . . . . . . . . .	L Near	 00000138 _TEXT	
+  _goodbye . . . . . . . . . . .	L Near	 000001C4 _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -801,41 +853,44 @@ WINDOW_BUFFER_SIZE_EVENT . . . .	Number	 00000004h
 WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
 WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
 ask_name . . . . . . . . . . . .	Byte	 00000034 _DATA	
-ask_val  . . . . . . . . . . . .	Byte	 000000D8 _DATA	
-avg  . . . . . . . . . . . . . .	DWord	 00000148 _DATA	
+ask_val_line . . . . . . . . . .	Byte	 00000289 _DATA	
+ask_val  . . . . . . . . . . . .	Byte	 000000DA _DATA	
+avg  . . . . . . . . . . . . . .	DWord	 0000014A _DATA	
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
-count  . . . . . . . . . . . . .	DWord	 00000140 _DATA	
+count  . . . . . . . . . . . . .	DWord	 00000142 _DATA	
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
+extra_1  . . . . . . . . . . . .	Byte	 00000200 _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
-instruction_1  . . . . . . . . .	Byte	 00000056 _DATA	
-instruction_2  . . . . . . . . .	Byte	 00000093 _DATA	
+instruction_1  . . . . . . . . .	Byte	 00000058 _DATA	
+instruction_2  . . . . . . . . .	Byte	 00000095 _DATA	
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
 lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
 lightGray  . . . . . . . . . . .	Number	 00000007h   
 lightGreen . . . . . . . . . . .	Number	 0000000Ah   
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
+line_number  . . . . . . . . . .	DWord	 00000285 _DATA	
 magenta  . . . . . . . . . . . .	Number	 00000005h   
-max  . . . . . . . . . . . . . .	DWord	 00000150 _DATA	
-min  . . . . . . . . . . . . . .	DWord	 0000014C _DATA	
-msg_avg  . . . . . . . . . . . .	Byte	 00000193 _DATA	
-msg_count_1  . . . . . . . . . .	Byte	 00000154 _DATA	
-msg_count_2  . . . . . . . . . .	Byte	 00000161 _DATA	
-msg_error  . . . . . . . . . . .	Byte	 000000E8 _DATA	
-msg_goodbye  . . . . . . . . . .	Byte	 00000115 _DATA	
-msg_greet  . . . . . . . . . . .	Byte	 00000048 _DATA	
-msg_max  . . . . . . . . . . . .	Byte	 000001C4 _DATA	
-msg_min  . . . . . . . . . . . .	Byte	 000001E1 _DATA	
-msg_sum  . . . . . . . . . . . .	Byte	 00000171 _DATA	
+max  . . . . . . . . . . . . . .	DWord	 00000152 _DATA	
+min  . . . . . . . . . . . . . .	DWord	 0000014E _DATA	
+msg_avg  . . . . . . . . . . . .	Byte	 00000195 _DATA	
+msg_count_1  . . . . . . . . . .	Byte	 00000156 _DATA	
+msg_count_2  . . . . . . . . . .	Byte	 00000163 _DATA	
+msg_error  . . . . . . . . . . .	Byte	 000000EA _DATA	
+msg_goodbye  . . . . . . . . . .	Byte	 00000117 _DATA	
+msg_greet  . . . . . . . . . . .	Byte	 0000004A _DATA	
+msg_max  . . . . . . . . . . . .	Byte	 000001C6 _DATA	
+msg_min  . . . . . . . . . . . .	Byte	 000001E3 _DATA	
+msg_sum  . . . . . . . . . . . .	Byte	 00000173 _DATA	
 msg_welcome  . . . . . . . . . .	Byte	 00000000 _DATA	
-msg_zeroValid  . . . . . . . . .	Byte	 000000FA _DATA	
+msg_zeroValid  . . . . . . . . .	Byte	 000000FC _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
-sum  . . . . . . . . . . . . . .	DWord	 00000144 _DATA	
-user_name  . . . . . . . . . . .	Byte	 0000011F _DATA	
+sum  . . . . . . . . . . . . . .	DWord	 00000146 _DATA	
+user_name  . . . . . . . . . . .	Byte	 00000121 _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
