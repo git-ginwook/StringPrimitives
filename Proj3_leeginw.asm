@@ -252,9 +252,9 @@ _anotherAverage:
 	;	e. average of valid numbers (rounded to the nearest integer)
 	;	f. parting message (with the user's name)
 	; -------------------------------------------------------------
-_display:
 	
 	;	a. count of validated numbers entered
+_display:
 	CALL	CrLf
 	MOV		EDX, OFFSET		msg_count_1
 	CALL	WriteString						; "You entered "
