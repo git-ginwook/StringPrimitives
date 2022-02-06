@@ -1,16 +1,20 @@
-Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/01/22 19:36:27
+Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 09:48:28
 /Integer Accumulator      (project3_leeginw.asm		     Page 1 - 1
 
 
 				TITLE Integer Accumulator      (project3_leeginw.asm)
 
 				; Author: GinWook Lee
-				; Last Modified: 1/31/2022
+				; Last Modified: 2/5/2022
 				; OSU email address: leeginw@oregonstate.edu
 				; Course number/section: CS271 Section 400
 				; Project Number: 03
 				; Due Date: 2/7/2022
-				; Description: TBD
+				; Description: This program takes in negative integers either between -200 and -100 or between -50 and -1.
+				;				The program validates user inputs to check whether the inputs are within the specified ranges.
+				;				Once user enters a non-negative integers, zero or above, the program switches to the
+				;				calculate-and-display mode. User will be able to see the maximum, minimum, sum, and average of 
+				;				the valid inputs they put in. 
 
 				INCLUDE Irvine32.inc
 			      C ; Include file for Irvine32.lib             (Irvine32.inc)
@@ -33,7 +37,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/01/22 19:36:27
 
 				; (insert macro definitions here)
 
-				; range boundaries in constant values
+				; valid range boundaries in constant values
  =-000000C8			LOW_BOUND		=	-200
  =-00000064			MIDLOW_BOUND	=	-100
  =-00000032			MIDHIGH_BOUND	=	-50
@@ -118,8 +122,8 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/01/22 19:36:27
  00000140 00000000			count					SDWORD		?
  00000144 00000000			sum						SDWORD		?
  00000148 00000000			avg						SDWORD		?
- 0000014C 00000000			min						SDWORD		?					; highest value within the valid number range
- 00000150 00000000			max						SDWORD		?					; lowest value within the valid number range
+ 0000014C 00000000			min						SDWORD		?
+ 00000150 00000000			max						SDWORD		?
 
 					; result messages
  00000154 59 6F 75 20 65		msg_count_1				BYTE		"You entered ",0
@@ -163,7 +167,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/01/22 19:36:27
  00000000			main PROC
 
 					; 1. display the program title and programmer's name
- 00000000  BA 00000000 R		MOV		EDX, OFFSET		msg_welcome
+ 00000000  BA 00000000 R		MOV		EDX, OFFSET		msg_welcome	
  00000005  E8 00000000 E		CALL	WriteString
 					
 					; 2. get the user's name, and greet the user
@@ -357,7 +361,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/01/22 19:36:27
 				; (insert additional procedures here)
 
 				END main
-Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/01/22 19:36:27
+Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/06/22 09:48:28
 /Integer Accumulator      (project3_leeginw.asm		     Symbols 2 - 1
 
 

@@ -1,18 +1,22 @@
 TITLE Integer Accumulator      (project3_leeginw.asm)
 
 ; Author: GinWook Lee
-; Last Modified: 1/31/2022
+; Last Modified: 2/5/2022
 ; OSU email address: leeginw@oregonstate.edu
 ; Course number/section: CS271 Section 400
 ; Project Number: 03
 ; Due Date: 2/7/2022
-; Description: TBD
+; Description: This program takes in negative integers either between -200 and -100 or between -50 and -1.
+;				The program validates user inputs to check whether the inputs are within the specified ranges.
+;				Once user enters a non-negative integers, zero or above, the program switches to the
+;				calculate-and-display mode. User will be able to see the maximum, minimum, sum, and average of 
+;				the valid inputs they put in. 
 
 INCLUDE Irvine32.inc
 
 ; (insert macro definitions here)
 
-; range boundaries in constant values
+; valid range boundaries in constant values
 LOW_BOUND		=	-200
 MIDLOW_BOUND	=	-100
 MIDHIGH_BOUND	=	-50
@@ -43,8 +47,8 @@ HIGH_BOUND		=	-1
 	count					SDWORD		?
 	sum						SDWORD		?
 	avg						SDWORD		?
-	min						SDWORD		?					; highest value within the valid number range
-	max						SDWORD		?					; lowest value within the valid number range
+	min						SDWORD		?
+	max						SDWORD		?
 
 	; result messages
 	msg_count_1				BYTE		"You entered ",0
@@ -58,30 +62,30 @@ HIGH_BOUND		=	-1
 main PROC
 
 	; 1. display the program title and programmer's name
-	MOV		EDX, OFFSET		msg_welcome
-	CALL	WriteString
+	MOV		EDX, OFFSET		msg_welcome	
+	CALL	WriteString							; "Welcome to the Integer Accumulator by GinWook Lee"
 	
 	; 2. get the user's name, and greet the user
 	MOV		EDX, OFFSET		ask_name
-	CALL	WriteString
+	CALL	WriteString							; "What is your name? "
 	
 	MOV		EDX, OFFSET		user_name
 	MOV		ECX, 32
-	CALL	ReadString
+	CALL	ReadString							; save user_name
 
 	MOV		EDX, OFFSET		msg_greet
-	CALL	WriteString
+	CALL	WriteString							; "Hello there, "
 	MOV		EDX, OFFSET		user_name
-	CALL	WriteString
+	CALL	WriteString							; display user_name
 	CALL	CrLf
 	CALL	CrLf
 
 	; 3. display instructions for the user
 _instruction:
 	MOV		EDX, OFFSET		instruction_1
-	CALL	WriteString
+	CALL	WriteString							; "Please enter integer numbers in [-200, -100] or [-50, -1]."
 	MOV		EDX, OFFSET		instruction_2
-	CALL	WriteString
+	CALL	WriteString							;"Enter a non-negative integer when you are finished to see results."
 	CALL	CrLf
 
 	; -------------------------------------------------------------
@@ -95,7 +99,7 @@ _instruction:
 	;	a. validate the user input
 _input:
 	MOV		EDX, OFFSET		ask_val
-	CALL	WriteString
+	CALL	WriteString						; "Enter integer: "
 	CALL	ReadInt							; get user integer in EAX
 	
 	MOV		EBX, EAX
@@ -117,7 +121,7 @@ _input:
 	;	b. notify the user of any invalid negative numbers
 _invalid:
 	MOV		EDX, OFFSET		msg_error
-	CALL	WriteString
+	CALL	WriteString						; "Number Invalid!"
 	JMP		_input
 
 	;	c. count and accumulate the valid user numbers
@@ -141,7 +145,7 @@ _minmax:
 	JMP		_max							; if not, keep the current min
 
 _changeMin:
-	MOV		min, EAX
+	MOV		min, EAX						; switch min
 
 _max:
 	CMP		EAX, max
@@ -149,7 +153,7 @@ _max:
 	JMP		_input							; if not, keep the current max
 
 _changeMax:
-	MOV		max, EAX
+	MOV		max, EAX						; switch max
 	JMP		_input
 
 	; -------------------------------------------------------------
@@ -168,7 +172,7 @@ _check:
 	;		a.i. special message indicating that there is no valid input
 _zeroValid:
 	MOV		EDX, OFFSET		msg_zeroValid
-	CALL	WriteString
+	CALL	WriteString						; "There is no valid input."
 	JMP		_goodbye
 
 	;	b. divide sum by count to get the quotient
@@ -199,48 +203,48 @@ _display:
 	;	a. count of validated numbers entered
 	CALL	CrLf
 	MOV		EDX, OFFSET		msg_count_1
-	CALL	WriteString
+	CALL	WriteString						; "You entered "
 	MOV		EAX, count
-	CALL	WriteDec
+	CALL	WriteDec						; display count
 	MOV		EDX, OFFSET		msg_count_2
-	CALL	WriteString
+	CALL	WriteString						; " valid numbers."
 	CALL	CrLf
 
 	;	b. sum of valid numbers
 	MOV		EDX, OFFSET		msg_sum
-	CALL	WriteString
+	CALL	WriteString						; "The sum of your valid numbers is "
 	MOV		EAX, sum
-	CALL	WriteInt
+	CALL	WriteInt						; display sum
 	Call	CrLf
 
 	;	c. maximum valid user value entered
 	MOV		EDX, OFFSET		msg_max
-	CALL	WriteString
+	CALL	WriteString						; "The maximum valid number is "
 	MOV		EAX, max
-	CALL	WriteInt
+	CALL	WriteInt						; display max
 	Call	CrLf
 
 	;	d. minimum valid user value entered
 	MOV		EDX, OFFSET		msg_min
-	CALL	WriteString
+	CALL	WriteString						; "The minimum valid number is "
 	MOV		EAX, min
-	CALL	WriteInt
+	CALL	WriteInt						; display min
 	Call	CrLf
 
 	;	e. average of valid numbers (rounded to the nearest integer)
 	MOV		EDX, OFFSET		msg_avg
-	CALL	WriteString
+	CALL	WriteString						; "The rounded (to the nearest integer) average is "
 	MOV		EAX, avg
-	CALL	WriteInt
+	CALL	WriteInt						; display avg
 	Call	CrLf
 
 	;	f. parting message with the user name
 _goodbye:
 	CALL	CrLf
 	MOV		EDX, OFFSET		msg_goodbye
-	CALL	WriteString
+	CALL	WriteString						; "Goodbye, "
 	MOV		EDX, OFFSET		user_name
-	CALL	WriteString
+	CALL	WriteString						; display user_name
 
 	Invoke ExitProcess,0	; exit to operating system
 main ENDP
