@@ -3,7 +3,7 @@ TITLE Prime Numbers     (project4_leeginw.asm)
 ; Author: GinWook Lee
 ; Last Modified: 2/18/2022
 ; OSU email address: leeginw@oregonstate.edu
-; Course number/section:   CS271 Section 400
+; Course number/section: CS271 Section 400
 ; Project Number: 04
 ; Due Date: 2/20/2022
 ; Description: This program takes a user input between 1 and 200 and shows the specified number of prime numbers.
@@ -14,19 +14,25 @@ TITLE Prime Numbers     (project4_leeginw.asm)
 ;				until the total number of prime numbers matches the number specified by user.			
 ;				**Extra Credits:
 ;				1) align the numbers so that the first digit of each number on a row matches with other rows.
+;				2a) extend the range of primes to display up to 4000 primes.
+;				2b) show 20 rows of primes per page
+;				2c) user presses any key to continue to the next page
 
 INCLUDE Irvine32.inc
 
 ; user input range (when n is an integer, 1 <= n <=200)
 LOWER_BOUND = 1
-UPPER_BOUND = 200
+UPPER_BOUND1 = 200
+
+; [Extra Credit #2] increase the upper bound to 4000 (new range: 1 <= n <= 4000)
+UPPER_BOUND2 = 4000
 
 .data
 
 ; instruction prompt
 msg_intro			BYTE		"Prime Numbers programmed by GinWook Lee",13,10,0
 instruction			BYTE		"Enter the number of prime numbers you would like to see.",13,10
-					BYTE		"I will accept orders for up to 200 primes.",13,10,13,10,0
+					BYTE		"I will accept orders for up to 4000 primes.",13,10,13,10,0
 
 ; user input
 ask_num				BYTE		"Enter the number of primes to display [1 ... 200]: ",0
@@ -43,11 +49,16 @@ candidate			DWORD		3			; initialize prime number candidate
 result_boolean		DWORD		?
 
 ; goodbye
-msg_goodbye			BYTE		13,10,13,10,"Results certified by GinWook Lee. Goodbye.",13,10,0
+msg_goodbye			BYTE		13,10,"Results certified by GinWook Lee. Goodbye.",13,10,0
 
 ; [Extra Credit #1] prompt and alignment variable
-extra_1				BYTE		"**EC#1: output columns will be aligned.",13,10,13,10,0
+extra_1				BYTE		"**EC#1: output columns will be aligned.",13,10,0
 tabchar				BYTE		09,0
+
+; [Extra Credit #2] prompt and row count variable
+extra_2				BYTE		"**EC#2: range is increased to 4000, 20 rows of numbers per page",13,10,13,10,0
+ask_num2			BYTE		"Enter the number of primes to display [1 ... 4000]: ",0
+row_count			DWORD		20			; 20 rows per page
 
 .code
 main PROC
@@ -71,6 +82,7 @@ main ENDP
 ; Receives: intro and instruction messages are stored in global vairables (msg_intro, instruction).
 ;			addresses of two global variables (msg_intro, instruction).
 ;			**EC#1: a notification that indicates Extra Credit #1 is stored in (extra_1).
+;			**EC#2: a notification that indicates Extra Credit #2 is stored in (extra_2).
 ; Returns: display program title, programmer's name, and instruction to user.
 ; -------------------------------------------------------------------------------------------------
 introduction PROC
@@ -79,6 +91,8 @@ introduction PROC
 	CALL	WriteString						; "Prime Numbers programmed by GinWook Lee"
 	MOV		EDX, OFFSET		extra_1
 	CALL	WriteString						; "**EC#1: output columns will be aligned."
+	MOV		EDX, OFFSET		extra_2
+	CALL	WriteString						; "**EC#2: range is increased to 4000, 20 rows of numbers per page"
 	MOV		EDX, OFFSET		instruction
 	CALL	WriteString						; "Enter the number of prime numbers you would like to see."
 	RET
@@ -88,20 +102,21 @@ introduction ENDP
 ; Name: getUserData
 ; Description: ask user to enter an integer between 1 and 200. Then, check whether the input is within
 ;				the specified range (1~200). If the input falls outside of the range, ask user to try again.
+;				**EC#2: input range is increased to 4000.
 ; 
 ; Preconditions: there is no preconditions for this procedure.
-; Postconditions: ECX is set to zero. EAX keeps a valid user input. EDX has the address of (ask_num).
+; Postconditions: ECX is set to zero. EAX keeps a valid user input. EDX has the address of (ask_num2).
 ;
-; Receives: a message prompt to ask user for an input is stored in a global variable (ask_num).
+; Receives: a message prompt to ask user for an input is stored in a global variable (ask_num2).
 ;			an error message is also stored in a global variable (msg_error) in case for an invalid input.
 ;			ECX (either 0 or 1) from the nested procedure (validate).
 ; Returns: store a valid user input to a global variable (user_num).
 ; -------------------------------------------------------------------------------------------------
 getUserData PROC
-	; ask user for an input
+	; [EC#2] ask user for an input
 _input:
-	MOV		EDX, OFFSET		ask_num
-	CALL	WriteString						; "Enter the number of primes to display [1 ... 200]: "
+	MOV		EDX, OFFSET		ask_num2
+	CALL	WriteString						; "Enter the number of primes to display [1 ... 4000]: "
 	CALL	ReadDec
 	
 	; validate the user input before storing it in a global variable
@@ -124,6 +139,7 @@ getUserData ENDP
 ; Name: validate
 ; Description: unless the user input passes both lower and upper bound checks (1 and 200), 
 ;				return to getUserData procedure to show the error message and let user try again.
+;				**EC#2: the upper bound is increased to 4000.
 ; 
 ; Preconditions: a user input is entered and stored in EAX for validation.
 ; Postconditions: ECX is is set to either 0 or 1 to inidicate whether the user input is valid.
@@ -136,9 +152,9 @@ validate PROC
 	CMP		EAX, LOWER_BOUND
 	JB		_error							; if the user input is less than 1, jump to _error
 
-	; upper bound check
-	CMP		EAX, UPPER_BOUND
-	JA		_error							; if the user input is greater than 200, jump to _error
+	; [EC#2] upper bound check
+	CMP		EAX, UPPER_BOUND2
+	JA		_error							; if the user input is greater than 4000, jump to _error
 	
 	; passed lower and upper bound checks
 	MOV		ECX, 0							; input is valid (0)
@@ -193,13 +209,21 @@ _prime:
 	CALL	WriteDec						; display prime number
 	MOV		EDX, OFFSET		tabchar
 	CALL	WriteString						; add space (horizontal tab)
+	
+	; if line_count reaches 10, jump to _newLine	
+	PUSH	ECX								; save prime number count
+	MOV		ECX, line_count					; recall the current line_count
+	LOOP	_countPrime						; until 10 prime numbers are filled, jump to _countPrime
 
-	; if line_count reaches 0, jump to _newLine	
-	DEC		line_count						; decrease line_count by 1
-	CMP		line_count, 0
-	JE		_newLine						; if 10 prime numbers fill the current row, jump to _newLine
+	MOV		line_count, ECX					; store the new line_count (zero)
+	POP		ECX								; restore prime number count
+	JMP		_newLine
 
 	; check number of primes
+_countPrime:
+	MOV		line_count, ECX					; store the new line_count
+	POP		ECX								; restore prime number count
+
 	LOOP	_primeLoop						; back to _primeLoop until user_num is reached
 	JMP		_return							; ECX = 0, jump to _return
 
@@ -208,10 +232,31 @@ _newLine:
 	CALL	CrLf							; move down to the next row
 	ADD		line_count, 10					; reset the line count to 10
 
+	; [EC#2] increase row count till the 20th row is reached
+	PUSH	ECX
+	MOV		ECX, row_count
+	LOOP	_currentPage					; if row_count is less than 20, jump to _currentPage	
+
+	MOV		row_count, ECX
+	POP		ECX
+
+	MOV		row_count, 20					; reset row_count to zero
+	CALL	CrLF
+	CALL	WaitMsg							; when row_count equals 20, wait till user moves to the next page
+	CALL	CrLf
+	CALL	CrLf
+	JMP		_newPage	
+
 	; check number of primes
+_currentPage:
+	MOV		row_count, ECX
+	POP		ECX
+	
+_newPage:	
 	LOOP	_primeLoop						; back to _primeLoop until user_num is reached
 
 _return:	
+	CALL	CrLf
 	RET
 showPrimes ENDP
 
@@ -238,7 +283,13 @@ isPrime PROC
 	CMP		candidate, 3					; if candidate == 3, jump straight to _primeCheck
 	JE		_primeCheck			
 
-	; check if candidate value is prime
+	; -----------------------------------------------
+	; This section checks if candidate value is prime.
+	; Use DIV instruction repeatedly until: 
+	;	a) divisor (EBX) equals candidate, meaning candidate is prime
+	;	OR
+	;	b) remainder (EDX) equals zero, meaning candidate is not prime
+	; -----------------------------------------------
 _primeCheck:
 	MOV		EAX, candidate					; reset low dividend (EAX) to candidate 
 	MOV		EDX, 0							; clear high dividend (EDX) to zero
