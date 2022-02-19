@@ -12,6 +12,8 @@ TITLE Prime Numbers     (project4_leeginw.asm)
 ;				Given a valid user input, the program then calculates and sequentially displays prime numbers 
 ;				in an ascending order, with 10 numbers per row and at least three spaces between each number,
 ;				until the total number of prime numbers matches the number specified by user.			
+;				**Extra Credits:
+;				1) align the numbers so that the first digit of each number on a row matches with other rows.
 
 INCLUDE Irvine32.inc
 
@@ -22,7 +24,7 @@ UPPER_BOUND = 200
 .data
 
 ; instruction prompt
-msg_intro			BYTE		"Prime Numbers programmed by GinWook Lee",13,10,13,10,0
+msg_intro			BYTE		"Prime Numbers programmed by GinWook Lee",13,10,0
 instruction			BYTE		"Enter the number of prime numbers you would like to see.",13,10
 					BYTE		"I will accept orders for up to 200 primes.",13,10,13,10,0
 
@@ -35,13 +37,17 @@ msg_error			BYTE		"No primes for you! Number out of range. Try again.",13,10,0
 
 ; calculate prime numbers
 line_count			DWORD		10			; 10 prime numbers per line
-tabchar				BYTE		09,0
+
 
 candidate			DWORD		3			; initialize prime number candidate 
 result_boolean		DWORD		?
 
 ; goodbye
 msg_goodbye			BYTE		13,10,13,10,"Results certified by GinWook Lee. Goodbye.",13,10,0
+
+; [Extra Credit #1] prompt and alignment variable
+extra_1				BYTE		"**EC#1: output columns will be aligned.",13,10,13,10,0
+tabchar				BYTE		09,0
 
 .code
 main PROC
@@ -63,13 +69,16 @@ main ENDP
 ; Postconditions: EDX changed to address of a global variable (instruction)
 ;
 ; Receives: intro and instruction messages are stored in global vairables (msg_intro, instruction).
-;			addresses of two global variables (msg_intro, instruction)
+;			addresses of two global variables (msg_intro, instruction).
+;			**EC#1: a notification that indicates Extra Credit #1 is stored in (extra_1).
 ; Returns: display program title, programmer's name, and instruction to user.
 ; -------------------------------------------------------------------------------------------------
 introduction PROC
 	; display intro and instruction prompt
 	MOV		EDX, OFFSET		msg_intro
 	CALL	WriteString						; "Prime Numbers programmed by GinWook Lee"
+	MOV		EDX, OFFSET		extra_1
+	CALL	WriteString						; "**EC#1: output columns will be aligned."
 	MOV		EDX, OFFSET		instruction
 	CALL	WriteString						; "Enter the number of prime numbers you would like to see."
 	RET
@@ -179,7 +188,7 @@ _primeLoop:
 	CMP		result_boolean, 0				; boolean value returned from isPrime (0 = not prime, 1 = prime)
 	JE		_primeLoop						; if not prime, jump back to _primeLoop. Prime, otherwise.
 
-	; display prime numbers
+	; [EC#1] display prime numbers and align output columns using horizontal tab
 _prime:
 	CALL	WriteDec						; display prime number
 	MOV		EDX, OFFSET		tabchar
