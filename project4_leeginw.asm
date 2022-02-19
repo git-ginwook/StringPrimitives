@@ -6,11 +6,14 @@ TITLE Prime Numbers     (project4_leeginw.asm)
 ; Course number/section:   CS271 Section 400
 ; Project Number: 04
 ; Due Date: 2/20/2022
-; Description: 
+; Description: This program takes a user input between 1 and 200 and shows the specified number of prime numbers.
+;				The program first validates whether the user entered a valid number.
+;				If not, the program lets user to try again.
+;				Given a valid user input, the program then calculates and sequentially displays prime numbers 
+;				in an ascending order, with 10 numbers per row and at least three spaces between each number,
+;				until the total number of prime numbers matches the number specified by user.			
 
 INCLUDE Irvine32.inc
-
-; (insert macro definitions here)
 
 ; user input range (when n is an integer, 1 <= n <=200)
 LOWER_BOUND = 1
@@ -34,7 +37,7 @@ msg_error			BYTE		"No primes for you! Number out of range. Try again.",13,10,0
 line_count			DWORD		10			; 10 prime numbers per line
 tabchar				BYTE		09,0
 
-candidate			DWORD		?
+candidate			DWORD		3			; initialize prime number candidate 
 result_boolean		DWORD		?
 
 ; goodbye
@@ -54,13 +57,14 @@ main ENDP
 
 ; -------------------------------------------------------------------------------------------------
 ; Name: introduction
-; Description: prompt program title, programmer's name, and instruction for user.
+; Description: call and display instruction prompts for user to grasp the purpose of this program.
 ; 
-; Preconditions: intro and instruction messages are stored in global vairables (msg_intro, instruction)
-; Postconditions: EDX changed to addresses of string
+; Preconditions: there is no preconditions for this procedure.
+; Postconditions: EDX changed to address of a global variable (instruction)
 ;
-; Receives: addresses of (msg_intro, instruction) on EDX
-; Returns: display intro and instruction messages on the console
+; Receives: intro and instruction messages are stored in global vairables (msg_intro, instruction).
+;			addresses of two global variables (msg_intro, instruction)
+; Returns: display program title, programmer's name, and instruction to user.
 ; -------------------------------------------------------------------------------------------------
 introduction PROC
 	; display intro and instruction prompt
@@ -71,17 +75,18 @@ introduction PROC
 	RET
 introduction ENDP
 
-; 2. user input and data validation
-	; if out of range: error message and re-prompt 
 ; -------------------------------------------------------------------------------------------------
 ; Name: getUserData
-; Description:
+; Description: ask user to enter an integer between 1 and 200. Then, check whether the input is within
+;				the specified range (1~200). If the input falls outside of the range, ask user to try again.
 ; 
-; Preconditions:
-; Postconditions:
+; Preconditions: there is no preconditions for this procedure.
+; Postconditions: ECX is set to zero. EAX keeps a valid user input. EDX has the address of (ask_num).
 ;
-; Receives:
-; Returns:
+; Receives: a message prompt to ask user for an input is stored in a global variable (ask_num).
+;			an error message is also stored in a global variable (msg_error) in case for an invalid input.
+;			ECX (either 0 or 1) from the nested procedure (validate).
+; Returns: store a valid user input to a global variable (user_num).
 ; -------------------------------------------------------------------------------------------------
 getUserData PROC
 	; ask user for an input
@@ -108,13 +113,14 @@ getUserData ENDP
 
 ; -------------------------------------------------------------------------------------------------
 ; Name: validate
-; Description:
+; Description: unless the user input passes both lower and upper bound checks (1 and 200), 
+;				return to getUserData procedure to show the error message and let user try again.
 ; 
-; Preconditions: user input value in EAX
-; Postconditions:
+; Preconditions: a user input is entered and stored in EAX for validation.
+; Postconditions: ECX is is set to either 0 or 1 to inidicate whether the user input is valid.
 ;
-; Receives: EAX with user input
-; Returns: ECX with validation result
+; Receives: user input stored in EAX. input ranges specified as constants(LOWER_BOUND, UPPER_BOUND).
+; Returns: ECX with validation result (0 for valid, 1 for invalid).
 ; -------------------------------------------------------------------------------------------------
 validate PROC
 	; lower bound check
@@ -138,19 +144,24 @@ _return:
 	RET										; return to getUserData procedure 
 validate ENDP
 
-; 3. calculate and display prime numbers
-	; 10 prime numbers per line (except for the final row)
-	; ascending order
-	; at least 3 spaces between numbers
 ; -------------------------------------------------------------------------------------------------
 ; Name: showPrimes
-; Description:
+; Description: display prime numbers in ascending order, with 10 prime numbers per row. The total number
+;				of prime numbers displayed will equal to the number user specified in (user_num). Each
+;				prime number displayed will have at least 3 spaces (or horizontal tab) between numbers.
 ; 
-; Preconditions:
-; Postconditions:
+; Preconditions: user input is valid and the value is stored in a global variable (user_num).
+; Postconditions: (result_boolean) is set to either 0 or 1. (line_count) is changed depending on the 
+;					number of prime numbers in the last row. ECX is changed to 0 once all intended 
+;					prime numbers are displayed. EDX is set to the address of the last (tabchar) used.
+;					EBX, EAX
 ;
-; Receives:
-; Returns:
+; Receives: valid user input (user_num). initial line count variable (line_count) set to 10. 
+;			address of a global variable (tabchar) to add a space between each prime number display.
+;			result_boolean (either 0 or 1) variable from the nested procedure (isPrime).
+;				if prime, prime number is stored in EAX and the next number to be tested in (candidate).
+;				if not prime, the next prime number to be tested is stored in (candidate).
+; Returns: display prime numbers sequentially until the total number of prime numbers reaches (user_num).
 ; -------------------------------------------------------------------------------------------------
 showPrimes PROC
 	; set the countdown variable ECX
@@ -158,22 +169,18 @@ showPrimes PROC
 	CALL	CrLf
 	
 	; base case: the minimum valid user input is 1
-	MOV		candidate, 2					; initialize candidate as 2
-	MOV		EAX, candidate					; move the first prime to EAX
-	
-	INC		candidate						; increase candidate by 1
+	MOV		EAX, 2							; initialize the first prime to EAX
 	JMP		_prime							; 2 is the first prime number by default
 
+	; check if candidate is prime
 _primeLoop:	
 	CALL	isPrime
 	
-	; check the result (0 = not prime, 1 = prime)
-	CMP		result_boolean, 0
+	CMP		result_boolean, 0				; boolean value returned from isPrime (0 = not prime, 1 = prime)
 	JE		_primeLoop						; if not prime, jump back to _primeLoop. Prime, otherwise.
 
 	; display prime numbers
 _prime:
-	MOV		EAX, candidate					; move prime number to EAX
 	CALL	WriteDec						; display prime number
 	MOV		EDX, OFFSET		tabchar
 	CALL	WriteString						; add space (horizontal tab)
@@ -201,41 +208,67 @@ showPrimes ENDP
 
 ; -------------------------------------------------------------------------------------------------
 ; Name: isPrime
-; Description:
+; Description: check the prime number candidate and return the result whether it is prime.
 ; 
-; Preconditions:
-; Postconditions:
+; Preconditions: (user_num) is greater than 1 and ECX is not zero, yet.
+; Postconditions: (candidate) is increased by 2 after each round of this procedure.
+;					EBX is changed to a value between 2 and (candidate).
+;					EAX is changed to the last quotient (depending on the _primeCheck result).
+;					EDX is changed to the last remainder (depending on the _primeCheck result).
 ;
-; Receives:
-; Returns: result_boolean (0 not prime or 1 prime)
+; Receives: initial candidate value (candidate) set to 3. 
+; Returns: result_boolean (0 not prime or 1 prime). 
+;				if prime, prime number is stored in EAX and the next prime number to be tested in (candidate).
+;				if not prime, the next prime number to be tested is stored in (candidate).
 ; -------------------------------------------------------------------------------------------------
-isPrime PROC
-	; if first round: candidate == 3, jump straight to _primeCheck
-	CMP		candidate, 3
-	JE		_primeCheck
+isPrime PROC	
+	; initialize divisor (EBX)
+	MOV		EBX, 2							; set to 2 as the starting point
 
-	; for each subsequent round: increase candidate by 2 (checking odd numbers only)
-	ADD		candidate, 2					; increment candidate by 2
+	; first round
+	CMP		candidate, 3					; if candidate == 3, jump straight to _primeCheck
+	JE		_primeCheck			
 
 	; check if candidate value is prime
-_primecheck:
+_primeCheck:
+	MOV		EAX, candidate					; reset low dividend (EAX) to candidate 
+	MOV		EDX, 0							; clear high dividend (EDX) to zero
+	DIV		EBX								; EDX:EAX divide by EBX
 
-	; return boolean
+	CMP		EBX, candidate					
+	JE		_prime							; if divisor equals dividends, jump to _prime
 
+	CMP		EDX, 0
+	JE		_notPrime						; if remainder equals zero, jump to _notPrime
+	
+	INC		EBX								; increase divisor (EBX) by 1		 
+	JMP		_primeCheck						; continue the checking process
 
+	; return boolean result
+_notPrime:
+	MOV		result_boolean, 0				; indicate candidate is not a prime
+	JMP		_return
+	
+_prime:
+	MOV		result_boolean, 1				; indicate candidate is a prime
+	MOV		EAX, candidate					; store prime number in EAX
+
+_return:
+	ADD		candidate, 2					; increase candidate by 2 (checking odd numbers only)
 	RET
 isPrime ENDP
 
 ; 4. say goodbye
 ; -------------------------------------------------------------------------------------------------
 ; Name: farewell
-; Description:
+; Description: call and display a farewell prompt to let user know this is the end of the program.
 ; 
-; Preconditions:
-; Postconditions:
+; Preconditions: ECX equals zero. All prime numbers are displayed on the console. The total number of 
+;				prime numbers matches the user specified value (user_num).
+; Postconditions: EDX changed to address of a global variable (msg_goodbye).
 ;
-; Receives:
-; Returns:
+; Receives: farewell message stored in a global variable (msg_goodbye).
+; Returns: display the farewell message to user.
 ; -------------------------------------------------------------------------------------------------
 farewell PROC
 	MOV		EDX, OFFSET		msg_goodbye
