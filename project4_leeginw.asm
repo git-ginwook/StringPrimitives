@@ -1,7 +1,7 @@
 TITLE Prime Numbers     (project4_leeginw.asm)
 
 ; Author: GinWook Lee
-; Last Modified: 2/18/2022
+; Last Modified: 2/20/2022
 ; OSU email address: leeginw@oregonstate.edu
 ; Course number/section: CS271 Section 400
 ; Project Number: 04
@@ -220,7 +220,7 @@ _prime:
 	POP		ECX								; restore the prime number count
 	JMP		_newLine
 
-	; check number of primes
+	; check number of primes after line check
 _countPrime:
 	MOV		line_count, ECX					; store the new line_count
 	POP		ECX								; restore the prime number count
@@ -238,6 +238,7 @@ _newLine:
 	MOV		ECX, row_count					; recall the current row_count (initial value is 20)
 	LOOP	_currentPage					; until row_count reaches zero, jump to _currentPage	
 
+	; [EC#2] let user continue to the next page after the 20th row of prime numbers
 	MOV		row_count, ECX					; save decremented row_count
 	POP		ECX								; restore the prime number count
 
@@ -246,17 +247,15 @@ _newLine:
 	CALL	WaitMsg							; when row_count equals 20, wait till user moves to the next page
 	CALL	CrLf
 	CALL	CrLf
-	JMP		_newPage	
+	JMP		_return	
 
-	; check number of primes
+	; check number of primes after page check
 _currentPage:
-	MOV		row_count, ECX
+	MOV		row_count, ECX					; save decremented row_count
 	POP		ECX
-	
-_newPage:	
-	LOOP	_primeLoop						; back to _primeLoop until user_num is reached
 
 _return:	
+	LOOP	_primeLoop						; back to _primeLoop until the total prime numbers equal user_num 
 	CALL	CrLf
 	RET
 showPrimes ENDP

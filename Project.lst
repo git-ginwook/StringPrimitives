@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/21/22 11:53:01
+Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/21/22 12:24:50
 (Prime Numbers     (project4_leeginw.asm		     Page 1 - 1
 
 
@@ -290,7 +290,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/21/22 11:53:01
 				; Postconditions: (result_boolean) is set to either 0 or 1. (line_count) is changed depending on the 
 				;					number of prime numbers in the last row. ECX is changed to 0 once all intended 
 				;					prime numbers are displayed. EDX is set to the address of the last (tabchar) used.
-				;					EAX and EBX is changed to a value that equals to the last prime number.
+				;					EAX and EBX is changed to a value that equals to the last prime number displayed.
 				;
 				; Receives: valid user input (user_num). 
 				;			initial line and row count variables (line_count, row_count) set to 10 and 20 respectively.
@@ -301,76 +301,75 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/21/22 11:53:01
 				; Returns: display prime numbers sequentially until the total number of prime numbers reaches (user_num).
 				; -------------------------------------------------------------------------------------------------
  00000085			showPrimes PROC
-					; set the countdown variable ECX
- 00000085  8B 0D 000000C8 R		MOV		ECX, user_num					; set ECX as prime counter (using LOOP)
+					; set ECX as a variable to count prime numbers displayed
+ 00000085  8B 0D 000000C8 R		MOV		ECX, user_num					; set ECX as a prime counter (using LOOP)
  0000008B  E8 00000000 E		CALL	CrLf
 					
 					; base case: the minimum valid user input is 1
  00000090  B8 00000002			MOV		EAX, 2							; initialize the first prime to EAX
- 00000095  EB 0E			JMP		_prime							; 2 is the first prime number by default
+ 00000095  EB 0E			JMP		_prime							; 2 is the first prime number to be displayed by default
 
-					; check if candidate is prime
+					; use subprocedure, isPrime to check if candidate is prime
  00000097			_primeLoop:	
  00000097  E8 00000080			CALL	isPrime
 					
- 0000009C  83 3D 00000109 R		CMP		result_boolean, 0				; boolean value returned from isPrime (0 = not prime, 1 = prime)
+ 0000009C  83 3D 00000109 R		CMP		result_boolean, 0				; boolean value passed from isPrime (0 = not prime, 1 = prime)
 	   00
- 000000A3  74 F2			JE		_primeLoop						; if not prime, jump back to _primeLoop. Prime, otherwise.
+ 000000A3  74 F2			JE		_primeLoop						; if not prime, jump back to _primeLoop. continue, otherwise.
 
 					; [EC#1] display prime numbers and align output columns using horizontal tab
  000000A5			_prime:
  000000A5  E8 00000000 E		CALL	WriteDec						; display prime number
  000000AA  BA 00000166 R		MOV		EDX, OFFSET		tabchar
- 000000AF  E8 00000000 E		CALL	WriteString						; add space (horizontal tab)
+ 000000AF  E8 00000000 E		CALL	WriteString						; add space (use horizontal tab for better alignment)
 					
-					; if line_count reaches 10, jump to _newLine	
- 000000B4  51				PUSH	ECX								; save prime number count
- 000000B5  8B 0D 00000101 R		MOV		ECX, line_count					; recall the current line_count
+					; when line_count reaches 0, jump to _newLine	
+ 000000B4  51				PUSH	ECX								; save the current prime number count
+ 000000B5  8B 0D 00000101 R		MOV		ECX, line_count					; recall the current line_count (initial value is 10)
  000000BB  E2 09			LOOP	_countPrime						; until 10 prime numbers are filled, jump to _countPrime
 
  000000BD  89 0D 00000101 R		MOV		line_count, ECX					; store the new line_count (zero)
- 000000C3  59				POP		ECX								; restore prime number count
+ 000000C3  59				POP		ECX								; restore the prime number count
  000000C4  EB 0B			JMP		_newLine
 
-					; check number of primes
+					; check number of primes after line check
  000000C6			_countPrime:
  000000C6  89 0D 00000101 R		MOV		line_count, ECX					; store the new line_count
- 000000CC  59				POP		ECX								; restore prime number count
+ 000000CC  59				POP		ECX								; restore the prime number count
 
- 000000CD  E2 C8			LOOP	_primeLoop						; back to _primeLoop until user_num is reached
- 000000CF  EB 45			JMP		_return							; ECX = 0, jump to _return
+ 000000CD  E2 C8			LOOP	_primeLoop						; back to _primeLoop if the prime counter(ECX) != 0
+ 000000CF  EB 43			JMP		_return							; if ECX = 0, jump to _return
 
 					; move to the next row
  000000D1			_newLine:
- 000000D1  E8 00000000 E		CALL	CrLf							; move down to the next row
- 000000D6  83 05 00000101 R		ADD		line_count, 10					; reset the line count to 10
+ 000000D1  E8 00000000 E		CALL	CrLf
+ 000000D6  83 05 00000101 R		ADD		line_count, 10					; reset the line count back to 10
 	   0A
 
 					; [EC#2] increase row count till the 20th row is reached
- 000000DD  51				PUSH	ECX
- 000000DE  8B 0D 000001E1 R		MOV		ECX, row_count
- 000000E4  E2 27			LOOP	_currentPage					; if row_count is less than 20, jump to _currentPage	
+ 000000DD  51				PUSH	ECX								; save the current prime number count
+ 000000DE  8B 0D 000001E1 R		MOV		ECX, row_count					; recall the current row_count (initial value is 20)
+ 000000E4  E2 27			LOOP	_currentPage					; until row_count reaches zero, jump to _currentPage	
 
- 000000E6  89 0D 000001E1 R		MOV		row_count, ECX
- 000000EC  59				POP		ECX
+					; [EC#2] let user continue to the next page after the 20th row of prime numbers
+ 000000E6  89 0D 000001E1 R		MOV		row_count, ECX					; save decremented row_count
+ 000000EC  59				POP		ECX								; restore the prime number count
 
- 000000ED  C7 05 000001E1 R		MOV		row_count, 20					; reset row_count to zero
+ 000000ED  C7 05 000001E1 R		MOV		row_count, 20					; reset row_count to 20
 	   00000014
  000000F7  E8 00000000 E		CALL	CrLF
  000000FC  E8 00000000 E		CALL	WaitMsg							; when row_count equals 20, wait till user moves to the next page
  00000101  E8 00000000 E		CALL	CrLf
  00000106  E8 00000000 E		CALL	CrLf
- 0000010B  EB 07			JMP		_newPage	
+ 0000010B  EB 07			JMP		_return	
 
-					; check number of primes
+					; check number of primes after page check
  0000010D			_currentPage:
  0000010D  89 0D 000001E1 R		MOV		row_count, ECX
  00000113  59				POP		ECX
-					
- 00000114			_newPage:	
- 00000114  E2 81			LOOP	_primeLoop						; back to _primeLoop until user_num is reached
 
- 00000116			_return:	
+ 00000114			_return:	
+ 00000114  E2 81			LOOP	_primeLoop						; back to _primeLoop until the total prime numbers equal user_num 
  00000116  E8 00000000 E		CALL	CrLf
  0000011B  C3				RET
  0000011C			showPrimes ENDP
@@ -456,7 +455,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/21/22 11:53:01
  00000174			farewell ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/21/22 11:53:01
+Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/21/22 12:24:50
 (Prime Numbers     (project4_leeginw.asm		     Symbols 2 - 1
 
 
@@ -677,8 +676,7 @@ showPrimes . . . . . . . . . . .	P Near	 00000085 _TEXT	Length= 00000097 Public 
   _countPrime  . . . . . . . . .	L Near	 000000C6 _TEXT	
   _newLine . . . . . . . . . . .	L Near	 000000D1 _TEXT	
   _currentPage . . . . . . . . .	L Near	 0000010D _TEXT	
-  _newPage . . . . . . . . . . .	L Near	 00000114 _TEXT	
-  _return  . . . . . . . . . . .	L Near	 00000116 _TEXT	
+  _return  . . . . . . . . . . .	L Near	 00000114 _TEXT	
 validate . . . . . . . . . . . .	P Near	 0000006C _TEXT	Length= 00000019 Public STDCALL
   _error . . . . . . . . . . . .	L Near	 0000007F _TEXT	
   _return  . . . . . . . . . . .	L Near	 00000084 _TEXT	
