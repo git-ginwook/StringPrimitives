@@ -179,9 +179,10 @@ validate ENDP
 ; Postconditions: (result_boolean) is set to either 0 or 1. (line_count) is changed depending on the 
 ;					number of prime numbers in the last row. ECX is changed to 0 once all intended 
 ;					prime numbers are displayed. EDX is set to the address of the last (tabchar) used.
-;					EBX, EAX
+;					EAX and EBX is changed to a value that equals to the last prime number displayed.
 ;
-; Receives: valid user input (user_num). initial line count variable (line_count) set to 10. 
+; Receives: valid user input (user_num). 
+;			initial line and row count variables (line_count, row_count) set to 10 and 20 respectively.
 ;			address of a global variable (tabchar) to add a space between each prime number display.
 ;			result_boolean (either 0 or 1) variable from the nested procedure (isPrime).
 ;				if prime, prime number is stored in EAX and the next number to be tested in (candidate).
@@ -189,58 +190,58 @@ validate ENDP
 ; Returns: display prime numbers sequentially until the total number of prime numbers reaches (user_num).
 ; -------------------------------------------------------------------------------------------------
 showPrimes PROC
-	; set the countdown variable ECX
-	MOV		ECX, user_num					; set ECX as prime counter (using LOOP)
+	; set ECX as a variable to count prime numbers displayed
+	MOV		ECX, user_num					; set ECX as a prime counter (using LOOP)
 	CALL	CrLf
 	
 	; base case: the minimum valid user input is 1
 	MOV		EAX, 2							; initialize the first prime to EAX
-	JMP		_prime							; 2 is the first prime number by default
+	JMP		_prime							; 2 is the first prime number to be displayed by default
 
-	; check if candidate is prime
+	; use subprocedure, isPrime to check if candidate is prime
 _primeLoop:	
 	CALL	isPrime
 	
-	CMP		result_boolean, 0				; boolean value returned from isPrime (0 = not prime, 1 = prime)
-	JE		_primeLoop						; if not prime, jump back to _primeLoop. Prime, otherwise.
+	CMP		result_boolean, 0				; boolean value passed from isPrime (0 = not prime, 1 = prime)
+	JE		_primeLoop						; if not prime, jump back to _primeLoop. continue, otherwise.
 
 	; [EC#1] display prime numbers and align output columns using horizontal tab
 _prime:
 	CALL	WriteDec						; display prime number
 	MOV		EDX, OFFSET		tabchar
-	CALL	WriteString						; add space (horizontal tab)
+	CALL	WriteString						; add space (use horizontal tab for better alignment)
 	
-	; if line_count reaches 10, jump to _newLine	
-	PUSH	ECX								; save prime number count
-	MOV		ECX, line_count					; recall the current line_count
+	; when line_count reaches 0, jump to _newLine	
+	PUSH	ECX								; save the current prime number count
+	MOV		ECX, line_count					; recall the current line_count (initial value is 10)
 	LOOP	_countPrime						; until 10 prime numbers are filled, jump to _countPrime
 
 	MOV		line_count, ECX					; store the new line_count (zero)
-	POP		ECX								; restore prime number count
+	POP		ECX								; restore the prime number count
 	JMP		_newLine
 
 	; check number of primes
 _countPrime:
 	MOV		line_count, ECX					; store the new line_count
-	POP		ECX								; restore prime number count
+	POP		ECX								; restore the prime number count
 
-	LOOP	_primeLoop						; back to _primeLoop until user_num is reached
-	JMP		_return							; ECX = 0, jump to _return
+	LOOP	_primeLoop						; back to _primeLoop if the prime counter(ECX) != 0
+	JMP		_return							; if ECX = 0, jump to _return
 
 	; move to the next row
 _newLine:
-	CALL	CrLf							; move down to the next row
-	ADD		line_count, 10					; reset the line count to 10
+	CALL	CrLf
+	ADD		line_count, 10					; reset the line count back to 10
 
 	; [EC#2] increase row count till the 20th row is reached
-	PUSH	ECX
-	MOV		ECX, row_count
-	LOOP	_currentPage					; if row_count is less than 20, jump to _currentPage	
+	PUSH	ECX								; save the current prime number count
+	MOV		ECX, row_count					; recall the current row_count (initial value is 20)
+	LOOP	_currentPage					; until row_count reaches zero, jump to _currentPage	
 
-	MOV		row_count, ECX
-	POP		ECX
+	MOV		row_count, ECX					; save decremented row_count
+	POP		ECX								; restore the prime number count
 
-	MOV		row_count, 20					; reset row_count to zero
+	MOV		row_count, 20					; reset row_count to 20
 	CALL	CrLF
 	CALL	WaitMsg							; when row_count equals 20, wait till user moves to the next page
 	CALL	CrLf

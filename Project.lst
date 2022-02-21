@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/19/22 23:27:59
+Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/21/22 11:53:01
 (Prime Numbers     (project4_leeginw.asm		     Page 1 - 1
 
 
@@ -290,9 +290,10 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/19/22 23:27:59
 				; Postconditions: (result_boolean) is set to either 0 or 1. (line_count) is changed depending on the 
 				;					number of prime numbers in the last row. ECX is changed to 0 once all intended 
 				;					prime numbers are displayed. EDX is set to the address of the last (tabchar) used.
-				;					EBX, EAX
+				;					EAX and EBX is changed to a value that equals to the last prime number.
 				;
-				; Receives: valid user input (user_num). initial line count variable (line_count) set to 10. 
+				; Receives: valid user input (user_num). 
+				;			initial line and row count variables (line_count, row_count) set to 10 and 20 respectively.
 				;			address of a global variable (tabchar) to add a space between each prime number display.
 				;			result_boolean (either 0 or 1) variable from the nested procedure (isPrime).
 				;				if prime, prime number is stored in EAX and the next number to be tested in (candidate).
@@ -455,7 +456,7 @@ Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/19/22 23:27:59
  00000174			farewell ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/19/22 23:27:59
+Microsoft (R) Macro Assembler Version 14.29.30138.0	    02/21/22 11:53:01
 (Prime Numbers     (project4_leeginw.asm		     Symbols 2 - 1
 
 
