@@ -1,12 +1,12 @@
 TITLE Project 5     (project0_leeginw.asm)
 
 ; Author: GinWook Lee
-; Last Modified:
+; Last Modified: 3/1/2022
 ; OSU email address: leeginw@oregonstate.edu
 ; Course number/section:   CS271 Section 400
-; Project Number:                 Due Date:
-; Description: This file is provided as a template from which you may work
-;              when developing assembly projects in CS271.
+; Project Number: 05
+; Due Date: 2/27/2022 + 2 grace days
+; Description: 
 
 INCLUDE Irvine32.inc
 
