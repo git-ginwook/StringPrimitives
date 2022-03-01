@@ -24,14 +24,24 @@ HI = 50
 .data
 
 ; prompt variables
-intro			BYTE			"Generating, Sorting, and Counting Random Integers! "
+intro_msg		BYTE			"Generating, Sorting, and Counting Random Integers! "
 				BYTE			"Programmed by GinWook lee",13,10,13,10,0
 
-descript		BYTE			"This program generates 200 random numbers in a given range and displays: ",13,10
+descript_msg	BYTE			"This program generates 200 random numbers in a given range and displays: ",13,10
 				BYTE			09,"1) the original list of random number array",13,10
 				BYTE			09,"2) the median value of the array",13,10
 				BYTE			09,"3) the sorted list of the array in ascending order",13,10
 				BYTE			09,"4) the number of instances of each random value generated",13,10,13,10,0
+
+unsort_msg		BYTE			"The original array of random numbers:",13,10,0
+
+median_msg		BYTE			"The median value of the array: ",0
+
+sort_msg		BYTE			"The sorted array of random numbers in ascending order:",13,10,0
+
+instance_msg	BYTE			"The number of instances of each random number generated:",13,10,0
+
+farewell_msg	BYTE			"Thank you and goodbye!",13,10,0
 
 ; array and count variables
 ;randArray
@@ -43,15 +53,14 @@ main PROC
 
 
 ; 1. program introduction
-;	push prompt variables to the stack
-	PUSH	OFFSET intro 
-;	PUSH	DWORD PTR LENGTHOF intro					; 33h = 51 characters
-	PUSH	OFFSET descript
-;	PUSH	DWORD PTR LENGTHOF descript					; 4bh = 75 characters
+	; push program intro and description variables to the stack
+	PUSH	OFFSET intro_msg
+	PUSH	OFFSET descript_msg
+
 	CALL	introduction
 
 
-	
+; 2. generate an array of 200 random numbers	
 	CALL	fillArray
 	
 	CALL	sortList
@@ -61,6 +70,9 @@ main PROC
 	CALL	countList
 
 
+; 6. say goodbye
+;	push farewell variable to the stack
+	PUSH	OFFSET farewell_msg
 
 	CALL	farewell
 
@@ -69,24 +81,25 @@ main ENDP
 
 ; -------------------------------------------------------------------------------------------------
 ; Name: introduction
-; Description: 
+; Description: Introduce the program to the user.
 ; 
-; Preconditions: 
-; Postconditions: 
+; Preconditions: there is no preconditions for the procedure.
+; Postconditions: EDX has the address of 'descript_msg'.
 ;
-; Receives: 
-; Returns:
+; Receives: program introduction and description prompts from 'main' procedure.
+;	- parameters: 'intro_msg' (reference, input), 'descript_msg' (reference, input)
+; Returns: display program title and description with programmer's name.
 ; -------------------------------------------------------------------------------------------------
 introduction	PROC	USES	EBP
-	MOV		EBP, ESP									; store new EBP
+	MOV		EBP, ESP									; set new EBP
 	
-	; introduce the program
-	MOV		EDX, [EBP+12]
+	; introduce the program 
+	MOV		EDX, [EBP+12]								; OFFSET intro_msg
 	CALL	WriteString
-	MOV		EDX, [EBP+8]
+	MOV		EDX, [EBP+8]								; OFFSET descript_msg
 	CALL	WriteString
-	;
-	RET		16
+	
+	RET		8											; two passed parameters
 introduction	ENDP
 
 
@@ -157,13 +170,13 @@ sortList		ENDP
 ; Receives: 
 ; Returns:
 ; -------------------------------------------------------------------------------------------------
-displayMedian		PROC	USES	EBP
+displayMedian	PROC	USES	EBP
 	MOV		EBP, ESP									; store new EBP
 ;
 ;
 ;
 	RET
-displayMedian		ENDP
+displayMedian	ENDP
 
 
 ; -------------------------------------------------------------------------------------------------
@@ -187,20 +200,24 @@ countList		ENDP
 
 ; -------------------------------------------------------------------------------------------------
 ; Name: farewell
-; Description: generate 200 random numbers ...
+; Description: end the program with a goodbye message to the user.
 ; 
-; Preconditions: 
-; Postconditions: 
+; Preconditions: all displays, including the original list, the median value, sorted list, and
+;				list of instances, are successfully shown to the user.
+; Postconditions: EDX has the address of 'farewell_msg'.
 ;
-; Receives: 
-; Returns:
+; Receives: farewell prompts from 'main' procedure.
+;	- parameter: 'farewell_msg' (reference, input)
+; Returns: display the goodbye message.
 ; -------------------------------------------------------------------------------------------------
 farewell		PROC	USES	EBP
 	MOV		EBP, ESP									; store new EBP
-;
-;
-;
-	RET
+	
+	; say goodbye to the user
+	MOV		EDX, [EBP+8]								; OFFSET farewell_msg
+	CALL	WriteString
+	
+	RET		4											; one passed parameter
 farewell		ENDP
 
 
