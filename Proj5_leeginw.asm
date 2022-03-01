@@ -16,7 +16,7 @@ INCLUDE Irvine32.inc
 ARRAYSIZE = 200
 LO = 15
 HI = 50
-; expected tests
+; expected test ranges
 ;	LO: 5 to 20
 ;	HI: 30 to 60 
 ;	ARRAYSIZE: 20 to 1000
@@ -24,27 +24,27 @@ HI = 50
 .data
 
 ; prompt variables
-intro_msg		BYTE			"Generating, Sorting, and Counting Random Integers! "
-				BYTE			"Programmed by GinWook lee",13,10,13,10,0
+intro_msg		BYTE		"Generating, Sorting, and Counting Random Integers! "
+				BYTE		"Programmed by GinWook lee",13,10,13,10,0
 
-descript_msg	BYTE			"This program generates 200 random numbers in a given range and displays: ",13,10
-				BYTE			09,"1) the original list of random number array",13,10
-				BYTE			09,"2) the median value of the array",13,10
-				BYTE			09,"3) the sorted list of the array in ascending order",13,10
-				BYTE			09,"4) the number of instances of each random value generated",13,10,13,10,0
+descript_msg	BYTE		"This program generates 200 random numbers in between 15 and 50 and displays: ",13,10
+				BYTE		09,"1) the original list of random number array",13,10
+				BYTE		09,"2) the median value of the array",13,10
+				BYTE		09,"3) the sorted list of the array in ascending order",13,10
+				BYTE		09,"4) the number of instances of each random value generated",13,10,13,10,0
 
-unsort_msg		BYTE			"The original array of random numbers:",13,10,0
+unsort_msg		BYTE		"The original array of random numbers:",13,10,0
 
-median_msg		BYTE			"The median value of the array: ",0
+median_msg		BYTE		"The median value of the array: ",0
 
-sort_msg		BYTE			"The sorted array of random numbers in ascending order:",13,10,0
+sort_msg		BYTE		"The sorted array of random numbers in ascending order:",13,10,0
 
-instance_msg	BYTE			"The number of instances of each random number generated:",13,10,0
+instance_msg	BYTE		"The number of instances of each random number generated:",13,10,0
 
-farewell_msg	BYTE			"Thank you and goodbye!",13,10,0
+farewell_msg	BYTE		"Thank you and goodbye!",13,10,0
 
 ; array and count variables
-;randArray
+randArray		BYTE		ARRAYSIZE DUP(?)
 ;counts
 
 
@@ -54,25 +54,36 @@ main PROC
 
 ; 1. program introduction
 	; push program intro and description variables to the stack
-	PUSH	OFFSET intro_msg
-	PUSH	OFFSET descript_msg
+	PUSH	OFFSET		intro_msg
+	PUSH	OFFSET		descript_msg
 
 	CALL	introduction
 
-
 ; 2. generate an array of 200 random numbers	
+	; push the address and tye type of the empty randArray
+	CALL	Randomize									; initialize a random seed
+	PUSH	OFFSET		randArray
+	PUSH	TYPE		randArray
+	
 	CALL	fillArray
 	
-	CALL	sortList
-	
-	CALL	displayMedian
-	
-	CALL	countList
+	; display filled randArray
+	CALL	displayList
 
+; 3.	
+	CALL	sortList
+	CALL	displayList
+
+; 4.
+	CALL	displayMedian
+
+; 5.
+	CALL	countList
+	CALL	displayList
 
 ; 6. say goodbye
 ;	push farewell variable to the stack
-	PUSH	OFFSET farewell_msg
+	PUSH	OFFSET		farewell_msg
 
 	CALL	farewell
 
@@ -84,7 +95,7 @@ main ENDP
 ; Description: Introduce the program to the user.
 ; 
 ; Preconditions: there is no preconditions for the procedure.
-; Postconditions: EDX has the address of 'descript_msg'.
+; Postconditions: no changes.
 ;
 ; Receives: program introduction and description prompts from 'main' procedure.
 ;	- parameters: 'intro_msg' (reference, input), 'descript_msg' (reference, input)
@@ -93,32 +104,61 @@ main ENDP
 introduction	PROC	USES	EBP
 	MOV		EBP, ESP									; set new EBP
 	
+	; preserve register to be used
+	PUSH	EDX
+
 	; introduce the program 
 	MOV		EDX, [EBP+12]								; OFFSET intro_msg
 	CALL	WriteString
 	MOV		EDX, [EBP+8]								; OFFSET descript_msg
 	CALL	WriteString
 	
+	; restore register used
+	POP		EDX
+
 	RET		8											; two passed parameters
 introduction	ENDP
 
 
 ; -------------------------------------------------------------------------------------------------
 ; Name: fillArray
-; Description: generate 200 random numbers ...
+; Description: fill the empty array with 200 random numbers in the range between 15 and 50.
 ; 
-; Preconditions: 
-; Postconditions: 
+; Preconditions: initialize the starting seed value for 'RandomRange' procedure by calling 'Randomize'.
+; Postconditions: no changes.
 ;
-; Receives: 
-; Returns:
+; Receives:
+;	- parameters: 'OFFSET randArray' (reference, input), 'TYPE randArray' (value, input)
+; Returns: randArray should be filled with new 200 random numbers in the range between 15 and 50.
 ; -------------------------------------------------------------------------------------------------
 fillArray		PROC	USES	EBP
-	MOV		EBP, ESP									; store new EBP
-;
-	CALL displayList
-;
-	RET
+	MOV		EBP, ESP									; set new EBP
+	
+	; preserve registers to be used
+	PUSH	EAX
+	PUSH	ECX
+	PUSH	EDI
+
+	MOV		ECX, ARRAYSIZE								; ARRAYSIZE(200) into ECX
+	MOV		EDI, [EBP+12]								; address of randArray into EDI
+
+	; generate 200 random numbers
+_randGenerator:
+	MOV		EAX, HI - LO + 1							; set the upper limit
+	CALL	RandomRange									; produce a random integer
+	ADD		EAX, LO										; range correction 
+
+	MOV		[EDI], EAX									; overwrite value in randArray
+	ADD		EDI, [EBP+8]								; increment EDI by 1 byte
+
+	LOOP	_randGenerator
+
+	; restore registers used in this procedure
+	POP		EDI
+	POP		ECX
+	POP		EAX
+
+	RET		8											; three passed parameters
 fillArray		ENDP
 
 
@@ -133,11 +173,9 @@ fillArray		ENDP
 ; Returns:
 ; -------------------------------------------------------------------------------------------------
 sortList		PROC	USES	EBP
-	MOV		EBP, ESP									; store new EBP
-;
-	CALL	exchangeElements
+	MOV		EBP, ESP									; set new EBP
 
-	CALL	displayList
+	CALL	exchangeElements
 ;
 	RET
 sortList		ENDP
@@ -152,7 +190,7 @@ sortList		ENDP
 	; Returns:
 	; -------------------------------------------------------------------------------------------------
 	exchangeElements	PROC	USES	EBP
-		MOV		EBP, ESP									; store new EBP
+		MOV		EBP, ESP									; set new EBP
 	;
 	;
 	;
@@ -171,7 +209,7 @@ sortList		ENDP
 ; Returns:
 ; -------------------------------------------------------------------------------------------------
 displayMedian	PROC	USES	EBP
-	MOV		EBP, ESP									; store new EBP
+	MOV		EBP, ESP									; set new EBP
 ;
 ;
 ;
@@ -190,9 +228,8 @@ displayMedian	ENDP
 ; Returns:
 ; -------------------------------------------------------------------------------------------------
 countList		PROC	USES	EBP
-	MOV		EBP, ESP									; store new EBP
+	MOV		EBP, ESP									; set new EBP
 ;
-	CALL	displayList
 ;
 	RET
 countList		ENDP
@@ -211,7 +248,7 @@ countList		ENDP
 ; Returns: display the goodbye message.
 ; -------------------------------------------------------------------------------------------------
 farewell		PROC	USES	EBP
-	MOV		EBP, ESP									; store new EBP
+	MOV		EBP, ESP									; set new EBP
 	
 	; say goodbye to the user
 	MOV		EDX, [EBP+8]								; OFFSET farewell_msg
@@ -223,7 +260,7 @@ farewell		ENDP
 
 ; -------------------------------------------------------------------------------------------------
 ; Name: displayList
-; Description: this procedure will be called three times for 1) unsorted 2) sorted 3) counts arrays
+; Description: this procedure will be called three times to display 1) unsorted 2) sorted 3) counts arrays
 ; 
 ; Preconditions: 
 ; Postconditions: 
@@ -232,9 +269,16 @@ farewell		ENDP
 ; Returns:
 ; -------------------------------------------------------------------------------------------------
 displayList			PROC	USES	EBP
-	MOV		EBP, ESP									; store new EBP
+	MOV		EBP, ESP									; set new EBP
 ;
-;
+;	MOV		ESI, [EBP+16]								; address of randArray into ESI
+
+;	MOV		AL, [ESI]
+;	CALL	WriteDec
+;	INC		ESI
+;	MOV		AL, [ESI]
+;	CALL	WriteDec
+
 ;
 	RET
 displayList			ENDP
