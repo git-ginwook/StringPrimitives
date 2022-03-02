@@ -1,4 +1,4 @@
-TITLE Project 5     (project0_leeginw.asm)
+TITLE Project 5     (project5_leeginw.asm)
 
 ; Author: GinWook Lee
 ; Last Modified: 3/1/2022
@@ -13,9 +13,9 @@ INCLUDE Irvine32.inc
 ; (insert macro definitions here)
 
 ; global constants
-ARRAYSIZE = 200
-LO = 15
-HI = 50
+ARRAYSIZE = 300
+LO = 10
+HI = 60
 ; expected test ranges
 ;	LO: 5 to 20
 ;	HI: 30 to 60 
@@ -46,6 +46,7 @@ farewell_msg	BYTE		"Thank you and goodbye!",13,10,0
 ; global variables
 space			BYTE		32,0						; space char
 line			DWORD		20							; 20 numbers per line
+median			DWORD		?
 
 ;counts
 randArray		BYTE		ARRAYSIZE DUP(?)
@@ -76,12 +77,12 @@ main PROC
 	CALL	displayList									; display the filled randArray
 
 ; 3. sort the random list in randArray in ascending order
-	;
+	; push the address of the randArray
 	PUSH	OFFSET		randArray
-	CALL	sortList
+	CALL	sortList									; sort random numbers in asecending order
 
 	PUSH	OFFSET		median_msg
-	CALL	displayMedian
+	CALL	displayMedian								; show the median value
 
 	; push variables for the displayList procedure
 	PUSH	OFFSET		sort_msg
@@ -101,7 +102,7 @@ main PROC
 	; push variables for the displayList procedure
 	PUSH	OFFSET		instance_msg
 	PUSH	OFFSET		randArray
-	PUSH	HI - LO + 1									; 
+	PUSH	HI - LO + 1									; number of values between LO and HI (inclusive)
 	PUSH	OFFSET		space
 	PUSH	line
 	CALL	displayList
@@ -238,6 +239,7 @@ sortList		ENDP
 		PUSH	EAX
 		PUSH	EBX
 		PUSH	ECX
+		PUSH	EDX
 		PUSH	ESI
 		PUSH	EDI
 
@@ -254,6 +256,7 @@ sortList		ENDP
 		CMP		AL, BL
 		JA		_moveRight
 
+		; move to the next pair of indices
 		INC		ESI
 		INC		EDI
 
@@ -264,6 +267,7 @@ sortList		ENDP
 		MOV		[ESI], BL
 		MOV		[EDI], AL
 
+		; move to the next pair of indices
 		INC		ESI
 		INC		EDI
 
@@ -273,6 +277,7 @@ sortList		ENDP
 	_returnSort:
 		POP		EDI
 		POP		ESI
+		POP		EDX
 		POP		ECX
 		POP		EBX
 		POP		EAX
@@ -293,9 +298,70 @@ sortList		ENDP
 ; -------------------------------------------------------------------------------------------------
 displayMedian	PROC	USES	EBP
 	MOV		EBP, ESP									; set new EBP
-;
-;
-;
+
+	; preserve register to be used
+	PUSH	EDX
+	PUSH	EAX
+	PUSH	EBX
+	PUSH	ECX
+
+	; display a message prompt for displayMedian
+	MOV		EDX, [EBP+8]								; OFFSET median_msg
+	CALL	WriteString
+	
+	; set registers
+
+	MOV		EAX, ARRAYSIZE
+	MOV		EBX, 2
+	MOV		EDX, 0
+	
+	INC		EAX
+	DIV		EBX
+
+	MOV		ECX, EAX
+	MOV		EAX, 0
+
+	CMP		EDX, 0
+	JE		_odd
+
+	; even
+
+	; get the middle two values
+	MOV		AL, [randArray + ECX * TYPE randArray]
+	DEC		ECX
+	MOV		DL, [randArray + ECX * TYPE randArray]
+
+	; 
+	ADD		AL, DL
+	DIV		BL
+
+	; quotient AL remainder AH
+	CMP		AH, 0
+	JNE		_roundUp
+	JMP		_showMedian
+
+_roundUp:
+	MOV		AH, 0
+	INC		AL
+	JMP		_showMedian
+	
+_odd:
+	DEC		ECX
+	MOV		AL, [randArray + ECX * TYPE randArray]
+
+
+	; show the median value
+_showMedian:
+	CALL	WriteDec
+	CALL	CrLf
+	CALL	CrLf
+	
+	; restore register
+	POP		ECX
+	POP		EBX
+	POP		EAX
+	POP		EDX
+
 	RET		4
 displayMedian	ENDP
 
