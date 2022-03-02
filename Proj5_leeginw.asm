@@ -28,10 +28,10 @@ intro_msg		BYTE		"Generating, Sorting, and Counting Random Integers! "
 				BYTE		"Programmed by GinWook lee",13,10,13,10,0
 
 descript_msg	BYTE		"This program generates 200 random numbers in between 15 and 50 and displays: ",13,10
-				BYTE		09,"1) the original list of random number array",13,10
-				BYTE		09,"2) the median value of the array",13,10
-				BYTE		09,"3) the sorted list of the array in ascending order",13,10
-				BYTE		09,"4) the number of instances of each random value generated (15~50)",13,10,13,10,0
+				BYTE		32,"1) the original list of random number array",13,10
+				BYTE		32,"2) the median value of the array",13,10
+				BYTE		32,"3) the sorted list of the array in ascending order",13,10
+				BYTE		32,"4) the number of instances of each random value generated (15~50)",13,10,13,10,0
 
 unsort_msg		BYTE		"The original array of random numbers:",13,10,0
 
@@ -46,9 +46,6 @@ farewell_msg	BYTE		"Thank you and goodbye!",13,10,0
 ; global variables
 space			BYTE		32,0						; space char
 line			DWORD		20							; 20 numbers per line
-
-index			DWORD		?
-temp			BYTE		?
 
 ;counts
 randArray		BYTE		ARRAYSIZE DUP(?)
@@ -78,15 +75,12 @@ main PROC
 	PUSH	line
 	CALL	displayList									; display the filled randArray
 
-; 3.	
+; 3. sort the random list in randArray in ascending order
 	;
-	PUSH	index
-	PUSH	temp
 	PUSH	OFFSET		randArray
 	CALL	sortList
 
 	PUSH	OFFSET		median_msg
-
 	CALL	displayMedian
 
 	; push variables for the displayList procedure
@@ -212,19 +206,20 @@ sortList		PROC	USES	EBP
 	
 	; set registers
 	MOV		ECX, ARRAYSIZE
+	DEC		ECX
 
-	PUSH	[EBP+16]									; initial index
-	PUSH	[EBP+12]									; initial temp
-	PUSH	[EBP+8]										; address of randArray
-	PUSH	TYPE	randArray
+	MOV		ESI, [EBP+8]
+	MOV		EDI, [EBP+8]
+	INC		EDI
+
 _exchange:
 	CALL	exchangeElements							
-	LOOP	_exhange									; _bubbleExchange (x200)
+	LOOP	_exchange									; _exchange (x200)
 	
 	; restore registers
 	POP		ECX
 	
-	RET		8
+	RET		4
 sortList		ENDP
 	; -------------------------------------------------------------------------------------------------
 	; Name: exchangeElements
@@ -238,68 +233,51 @@ sortList		ENDP
 	; -------------------------------------------------------------------------------------------------
 	exchangeElements	PROC	USES	EBP
 		MOV		EBP, ESP									; set new EBP
+		
 		; preserve registers
 		PUSH	EAX
 		PUSH	EBX
 		PUSH	ECX
-		PUSH	EDX
 		PUSH	ESI
 		PUSH	EDI
 
 		; set registers
 		MOV		EAX, 0
 		MOV		EBX, 0
-		MOV		ECX, ARRAYSIZE
-		MOV		EDX, index
+		MOV		EDX, 0
 
-	_indexMove:
-		MOV		ECX, ARRAYSIZE
-
-		MOV		ESI, [EBP+12]
-		ADD		ESI, EDX
-		MOV		EAX, [ESI]
-
-		MOV		EDI, [EBP+12]
-		INC		EDX
-		ADD		EDI, EDX
-		MOV		EBX, [EDI]
-;		MOV		BL, [randArray + TYPE randArray + DL]
-		
-		; bubble sort
+		; compare the current and next indices
 	_bubble:
+		MOV		EAX, [ESI]
+		MOV		EBX, [EDI]
 
 		CMP		AL, BL
-		JA		_moveRight									; if the current > next element, jump to _moveRight
-		
-		INC		EDX
-		LOOP	_indexMove
+		JA		_moveRight
 
-		JMP		_indexCheck
+		INC		ESI
+		INC		EDI
 
-		; 
+		LOOP	_bubble
+		JMP		_returnSort
+
 	_moveRight:
-	
 		MOV		[ESI], BL
 		MOV		[EDI], AL
 
+		INC		ESI
+		INC		EDI
 
-	_indexCheck:
-		INC		EDX
-		MOV		ECX, ARRAYSIZE
-		DEC		ECX											; reset ECX
-		
-		JNZ		_indexMove
-
+		LOOP	_bubble
 
 		; restore registers
+	_returnSort:
 		POP		EDI
 		POP		ESI
-		POP		EDX
 		POP		ECX
 		POP		EBX
 		POP		EAX
 
-		RET
+		RET		
 	exchangeElements	ENDP
 
 
@@ -318,7 +296,7 @@ displayMedian	PROC	USES	EBP
 ;
 ;
 ;
-	RET
+	RET		4
 displayMedian	ENDP
 
 
