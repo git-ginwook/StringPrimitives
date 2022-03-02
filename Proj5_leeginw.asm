@@ -45,9 +45,13 @@ farewell_msg	BYTE		"Thank you and goodbye!",13,10,0
 
 ; global variables
 space			BYTE		32,0						; space char
-counts			DWORD		20							; 20 numbers per line
-randArray		BYTE		ARRAYSIZE DUP(?)
+line			DWORD		20							; 20 numbers per line
+
+index			DWORD		?
+temp			BYTE		?
+
 ;counts
+randArray		BYTE		ARRAYSIZE DUP(?)
 
 .code
 main PROC
@@ -71,26 +75,33 @@ main PROC
 	PUSH	OFFSET		randArray
 	PUSH	LENGTHOF	randArray
 	PUSH	OFFSET		space
-	PUSH	counts
+	PUSH	line
 	CALL	displayList									; display the filled randArray
 
-; 3.
-	CALL	displayMedian
-
-; 4.	
+; 3.	
 	;
+	PUSH	index
+	PUSH	temp
+	PUSH	OFFSET		randArray
 	CALL	sortList
+
+	PUSH	OFFSET		median_msg
+
+	CALL	displayMedian
 
 	; push variables for the displayList procedure
 	PUSH	OFFSET		sort_msg
 	PUSH	OFFSET		randArray
 	PUSH	LENGTHOF	randArray
 	PUSH	OFFSET		space
-	PUSH	counts
+	PUSH	line
 	CALL	displayList
 
-; 5.
-	;
+
+; 4. count number of instances for each value between LO(15) and HI(50)
+	; push
+;	PUSH	OFFSET		instance_msg
+	
 	CALL	countList
 
 	; push variables for the displayList procedure
@@ -98,7 +109,7 @@ main PROC
 	PUSH	OFFSET		randArray
 	PUSH	HI - LO + 1									; 
 	PUSH	OFFSET		space
-	PUSH	counts
+	PUSH	line
 	CALL	displayList
 
 ; 6. say goodbye
@@ -184,6 +195,115 @@ fillArray		ENDP
 
 
 ; -------------------------------------------------------------------------------------------------
+; Name: sortList
+; Description: generate 200 random numbers ...
+; 
+; Preconditions: 
+; Postconditions: 
+;
+; Receives: 
+; Returns:
+; -------------------------------------------------------------------------------------------------
+sortList		PROC	USES	EBP
+	MOV		EBP, ESP									; set new EBP
+
+	; preserve registers
+	PUSH	ECX
+	
+	; set registers
+	MOV		ECX, ARRAYSIZE
+
+	PUSH	[EBP+16]									; initial index
+	PUSH	[EBP+12]									; initial temp
+	PUSH	[EBP+8]										; address of randArray
+	PUSH	TYPE	randArray
+_exchange:
+	CALL	exchangeElements							
+	LOOP	_exhange									; _bubbleExchange (x200)
+	
+	; restore registers
+	POP		ECX
+	
+	RET		8
+sortList		ENDP
+	; -------------------------------------------------------------------------------------------------
+	; Name: exchangeElements
+	; Description: generate 200 random numbers ...
+	; 
+	; Preconditions: 
+	; Postconditions: 
+	;
+	; Receives: 
+	; Returns:
+	; -------------------------------------------------------------------------------------------------
+	exchangeElements	PROC	USES	EBP
+		MOV		EBP, ESP									; set new EBP
+		; preserve registers
+		PUSH	EAX
+		PUSH	EBX
+		PUSH	ECX
+		PUSH	EDX
+		PUSH	ESI
+		PUSH	EDI
+
+		; set registers
+		MOV		EAX, 0
+		MOV		EBX, 0
+		MOV		ECX, ARRAYSIZE
+		MOV		EDX, index
+
+	_indexMove:
+		MOV		ECX, ARRAYSIZE
+
+		MOV		ESI, [EBP+12]
+		ADD		ESI, EDX
+		MOV		EAX, [ESI]
+
+		MOV		EDI, [EBP+12]
+		INC		EDX
+		ADD		EDI, EDX
+		MOV		EBX, [EDI]
+;		MOV		BL, [randArray + TYPE randArray + DL]
+		
+		; bubble sort
+	_bubble:
+
+		CMP		AL, BL
+		JA		_moveRight									; if the current > next element, jump to _moveRight
+		
+		INC		EDX
+		LOOP	_indexMove
+
+		JMP		_indexCheck
+
+		; 
+	_moveRight:
+	
+		MOV		[ESI], BL
+		MOV		[EDI], AL
+
+
+	_indexCheck:
+		INC		EDX
+		MOV		ECX, ARRAYSIZE
+		DEC		ECX											; reset ECX
+		
+		JNZ		_indexMove
+
+
+		; restore registers
+		POP		EDI
+		POP		ESI
+		POP		EDX
+		POP		ECX
+		POP		EBX
+		POP		EAX
+
+		RET
+	exchangeElements	ENDP
+
+
+; -------------------------------------------------------------------------------------------------
 ; Name: displayMedian
 ; Description: generate 200 random numbers ...
 ; 
@@ -203,42 +323,6 @@ displayMedian	ENDP
 
 
 ; -------------------------------------------------------------------------------------------------
-; Name: sortList
-; Description: generate 200 random numbers ...
-; 
-; Preconditions: 
-; Postconditions: 
-;
-; Receives: 
-; Returns:
-; -------------------------------------------------------------------------------------------------
-sortList		PROC	USES	EBP
-	MOV		EBP, ESP									; set new EBP
-
-	CALL	exchangeElements
-;
-	RET
-sortList		ENDP
-	; -------------------------------------------------------------------------------------------------
-	; Name: exchangeElements
-	; Description: generate 200 random numbers ...
-	; 
-	; Preconditions: 
-	; Postconditions: 
-	;
-	; Receives: 
-	; Returns:
-	; -------------------------------------------------------------------------------------------------
-	exchangeElements	PROC	USES	EBP
-		MOV		EBP, ESP									; set new EBP
-	;
-	;
-	;
-		RET
-	exchangeElements	ENDP
-
-
-; -------------------------------------------------------------------------------------------------
 ; Name: countList
 ; Description: generate 200 random numbers ...
 ; 
@@ -250,8 +334,28 @@ sortList		ENDP
 ; -------------------------------------------------------------------------------------------------
 countList		PROC	USES	EBP
 	MOV		EBP, ESP									; set new EBP
-;
-;
+	; preserve registers
+
+	; write prompt
+
+
+	; set registers
+
+	; 
+_inRange:
+
+	; count instances (for each value in the range between LO(15) and HI(50))
+_countLoop:
+	
+
+
+	; store each count in randArray
+
+
+	; restore registers
+_nextProc:
+
+
 	RET
 countList		ENDP
 
