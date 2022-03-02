@@ -13,11 +13,12 @@ INCLUDE Irvine32.inc
 ; (insert macro definitions here)
 
 ; global constants
-ARRAYSIZE = 300
+ARRAYSIZE = 1000
 LO = 10
 HI = 60
 ; expected test ranges
 ;	LO: 5 to 20
+
 ;	HI: 30 to 60 
 ;	ARRAYSIZE: 20 to 1000
 
@@ -46,10 +47,9 @@ farewell_msg	BYTE		"Thank you and goodbye!",13,10,0
 ; global variables
 space			BYTE		32,0						; space char
 line			DWORD		20							; 20 numbers per line
-median			DWORD		?
 
-;counts
 randArray		BYTE		ARRAYSIZE DUP(?)
+counts			BYTE		HI - LO + 1 DUP(?)
 
 .code
 main PROC
@@ -81,6 +81,7 @@ main PROC
 	PUSH	OFFSET		randArray
 	CALL	sortList									; sort random numbers in asecending order
 
+	;
 	PUSH	OFFSET		median_msg
 	CALL	displayMedian								; show the median value
 
@@ -94,15 +95,16 @@ main PROC
 
 
 ; 4. count number of instances for each value between LO(15) and HI(50)
-	; push
-;	PUSH	OFFSET		instance_msg
-	
+	; push 
+	PUSH	TYPE		randArray
+	PUSH	OFFSET		randArray
+	PUSH	OFFSET		counts
 	CALL	countList
 
 	; push variables for the displayList procedure
 	PUSH	OFFSET		instance_msg
-	PUSH	OFFSET		randArray
-	PUSH	HI - LO + 1									; number of values between LO and HI (inclusive)
+	PUSH	OFFSET		counts
+	PUSH	LENGTHOF	counts							; number of values between LO and HI (inclusive)
 	PUSH	OFFSET		space
 	PUSH	line
 	CALL	displayList
@@ -379,28 +381,45 @@ displayMedian	ENDP
 countList		PROC	USES	EBP
 	MOV		EBP, ESP									; set new EBP
 	; preserve registers
-
-	; write prompt
-
+	PUSH	EAX
+	PUSH	EBX
+	PUSH	ECX
+	PUSH	ESI
+	PUSH	EDI
 
 	; set registers
+	MOV		EAX, 0
+	MOV		EBX, LO
+	MOV		ECX, ARRAYSIZE
+	MOV		ESI, [EBP+12]
+	MOV		EDI, [EBP+8]
 
-	; 
-_inRange:
+	;
+_count:
+	CMP		[ESI], BL
+	JE		_addCount
+	MOV		[EDI], AL
+	ADD		EDI, [EBP+16]
+	MOV		EAX, 0
+	INC		EBX
+	JMP		_count
 
-	; count instances (for each value in the range between LO(15) and HI(50))
-_countLoop:
+_addCount:
+	INC		EAX
+	ADD		ESI, [EBP+16]
+	LOOP	_count
 	
-
-
-	; store each count in randArray
-
+	; add the last count to the counts array
+	MOV		[EDI], AL
 
 	; restore registers
-_nextProc:
+	POP		EDI
+	POP		ESI
+	POP		ECX
+	POP		EBX
+	POP		EAX
 
-
-	RET
+	RET		12
 countList		ENDP
 
 
