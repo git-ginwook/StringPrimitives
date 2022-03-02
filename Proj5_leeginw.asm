@@ -1,24 +1,27 @@
 TITLE Project 5     (project5_leeginw.asm)
 
 ; Author: GinWook Lee
-; Last Modified: 3/1/2022
+; Last Modified: 3/2/2022
 ; OSU email address: leeginw@oregonstate.edu
 ; Course number/section:   CS271 Section 400
 ; Project Number: 05
-; Due Date: 2/27/2022 + 2 grace days
-; Description: 
+; Due Date: 3/2/2022 + 2 grace days
+; Description: This program generates a random list, sorts it in ascending order, finds the median value,
+;				and counts the number of instances of each random value generated. 
+;				The program follows a strict boundary defined by global constants:
+;					1) the total number of elements in a random list is limited to ARRAYSIZE,
+;					2) the lowest possible value is set by LO,
+;					3) and the highest possible value is determined by HI.
+;				The proram displays each result in an orderly manner (20 numbers per line evenly spaced out).		
 
 INCLUDE Irvine32.inc
 
-; (insert macro definitions here)
-
 ; global constants
-ARRAYSIZE = 1000
-LO = 10
-HI = 60
+ARRAYSIZE = 200
+LO = 15
+HI = 50
 ; expected test ranges
 ;	LO: 5 to 20
-
 ;	HI: 30 to 60 
 ;	ARRAYSIZE: 20 to 1000
 
@@ -40,7 +43,7 @@ median_msg		BYTE		"The median value of the array: ",0
 
 sort_msg		BYTE		"The sorted array of random numbers in ascending order:",13,10,0
 
-instance_msg	BYTE		"The number of instances of each random number generated:",13,10,0
+instance_msg	BYTE		"The number of instances of each random number generated (15~50):",13,10,0
 
 farewell_msg	BYTE		"Thank you and goodbye!",13,10,0
 
@@ -76,12 +79,12 @@ main PROC
 	PUSH	line
 	CALL	displayList									; display the filled randArray
 
-; 3. sort the random list in randArray in ascending order
+; 3. sort the random list in randArray in ascending order and display the median value
 	; push the address of the randArray
 	PUSH	OFFSET		randArray
 	CALL	sortList									; sort random numbers in asecending order
 
-	;
+	; push median message to the stack
 	PUSH	OFFSET		median_msg
 	CALL	displayMedian								; show the median value
 
@@ -89,16 +92,16 @@ main PROC
 	PUSH	OFFSET		sort_msg
 	PUSH	OFFSET		randArray
 	PUSH	LENGTHOF	randArray
-	PUSH	OFFSET		space
-	PUSH	line
+	PUSH	OFFSET		space							; space char
+	PUSH	line										; 20 elements per line
 	CALL	displayList
 
 
 ; 4. count number of instances for each value between LO(15) and HI(50)
-	; push 
+	; push the addresses of randArray and counts arrays 
 	PUSH	TYPE		randArray
 	PUSH	OFFSET		randArray
-	PUSH	OFFSET		counts
+	PUSH	OFFSET		counts							; new empty array to hold the number of instances
 	CALL	countList
 
 	; push variables for the displayList procedure
@@ -109,10 +112,9 @@ main PROC
 	PUSH	line
 	CALL	displayList
 
-; 6. say goodbye
-;	push farewell variable to the stack
+; 5. say goodbye
+;	push farewell message to the stack
 	PUSH	OFFSET		farewell_msg
-
 	CALL	farewell
 
 	Invoke ExitProcess,0								; exit to operating system
@@ -187,19 +189,21 @@ _randGenerator:
 	POP		ECX
 	POP		EAX
 
-	RET		8											; three passed parameters
+	RET		8											; two passed parameters
 fillArray		ENDP
 
 
 ; -------------------------------------------------------------------------------------------------
 ; Name: sortList
-; Description: generate 200 random numbers ...
+; Description: sort the original array with 200 random numbers in ascending order.
 ; 
-; Preconditions: 
-; Postconditions: 
+; Preconditions: proper execution of the fillArray procedure to generate 200 random numbers within
+;					the given range [15, 50] in randArray.
+; Postconditions: no changes.
 ;
-; Receives: 
-; Returns:
+; Receives: meemory address of 'randArray' 
+;	- parameters: 'randArray' (reference, input), 'randArray' (reference, output)
+; Returns: randArray should be sorted in asecending order.
 ; -------------------------------------------------------------------------------------------------
 sortList		PROC	USES	EBP
 	MOV		EBP, ESP									; set new EBP
@@ -210,29 +214,31 @@ sortList		PROC	USES	EBP
 	; set registers
 	MOV		ECX, ARRAYSIZE
 	DEC		ECX
-
-	MOV		ESI, [EBP+8]
-	MOV		EDI, [EBP+8]
-	INC		EDI
+	MOV		ESI, [EBP+8]								; address of the first value in randArray
+	MOV		EDI, [EBP+8]								
+	INC		EDI											; address of the second value in randArray
 
 _exchange:
 	CALL	exchangeElements							
-	LOOP	_exchange									; _exchange (x200)
+	LOOP	_exchange									; repeat until the bubble sort is complete
 	
 	; restore registers
 	POP		ECX
 	
-	RET		4
+	RET		4											; one passed parameter
 sortList		ENDP
 	; -------------------------------------------------------------------------------------------------
 	; Name: exchangeElements
-	; Description: generate 200 random numbers ...
+	; Description: run one cycle of the bubble sort method until all the numbers in randArray gets sorted.
 	; 
-	; Preconditions: 
-	; Postconditions: 
+	; Preconditions: initial execution of this procedure requires ESI and EDI to point to the first and 
+	;				the second value of randArray. Each subsequent call of this procedure also needs
+	;				a decremented ECX from sortList to minimize the unncessary sorting. 
+	; Postconditions: no changes.
 	;
-	; Receives: 
-	; Returns:
+	; Receives: memory addresses of the first and second value in 'randArray'
+	; Returns: each nth exchange returns more sorted array with the nth largest value positioned at 
+	;			the right end of the array (from the largest to smallest in reverse order).
 	; -------------------------------------------------------------------------------------------------
 	exchangeElements	PROC	USES	EBP
 		MOV		EBP, ESP									; set new EBP
@@ -245,15 +251,15 @@ sortList		ENDP
 		PUSH	ESI
 		PUSH	EDI
 
-		; set registers
+		; initialize registers
 		MOV		EAX, 0
 		MOV		EBX, 0
 		MOV		EDX, 0
 
 		; compare the current and next indices
 	_bubble:
-		MOV		EAX, [ESI]
-		MOV		EBX, [EDI]
+		MOV		EAX, [ESI]									; prep to convert into a 8-bit register
+		MOV		EBX, [EDI]									; prep to convert into a 8-bit register
 
 		CMP		AL, BL
 		JA		_moveRight
@@ -265,6 +271,7 @@ sortList		ENDP
 		LOOP	_bubble
 		JMP		_returnSort
 
+		; switch positions of the two values
 	_moveRight:
 		MOV		[ESI], BL
 		MOV		[EDI], AL
@@ -284,99 +291,105 @@ sortList		ENDP
 		POP		EBX
 		POP		EAX
 
-		RET		
+		RET													; return to sortList
 	exchangeElements	ENDP
 
 
 ; -------------------------------------------------------------------------------------------------
 ; Name: displayMedian
-; Description: generate 200 random numbers ...
+; Description: calculate the median value of the sorted list in randArray and display it to the user.
 ; 
-; Preconditions: 
-; Postconditions: 
+; Preconditions: proper execution of the sortList procedure to have 200 random numbers sorted in
+;				ascending order.
+; Postconditions: no changes.
 ;
-; Receives: 
-; Returns:
+; Receives: a message prompt to show the median value.
+;	- parameters: 'median_msg' (reference, input)
+; Returns: the median value is shown to the user.
 ; -------------------------------------------------------------------------------------------------
 displayMedian	PROC	USES	EBP
 	MOV		EBP, ESP									; set new EBP
 
-	; preserve register to be used
+	; preserve registers
 	PUSH	EDX
 	PUSH	EAX
 	PUSH	EBX
 	PUSH	ECX
 
-	; display a message prompt for displayMedian
+	; display a message prompt for the displayMedian procedure
 	MOV		EDX, [EBP+8]								; OFFSET median_msg
 	CALL	WriteString
 	
 	; set registers
-
-	MOV		EAX, ARRAYSIZE
-	MOV		EBX, 2
-	MOV		EDX, 0
+	MOV		EAX, ARRAYSIZE								; dividend
+	MOV		EBX, 2										; divisor
+	MOV		EDX, 0										; remainder
 	
+	; find the middle value
 	INC		EAX
-	DIV		EBX
+	DIV		EBX											; (number of elements + 1) / 2
 
-	MOV		ECX, EAX
+	MOV		ECX, EAX									; move the quotient to ECX
 	MOV		EAX, 0
 
-	CMP		EDX, 0
+	CMP		EDX, 0										; if remainder is zero, jump to _odd
 	JE		_odd
 
-	; even
 
-	; get the middle two values
-	MOV		AL, [randArray + ECX * TYPE randArray]
+	; if raminder is not zero (even), get the middle two values
+	MOV		AL, [randArray + ECX * TYPE randArray]		; address of randArray + (quotient * 1)
 	DEC		ECX
-	MOV		DL, [randArray + ECX * TYPE randArray]
+	MOV		DL, [randArray + ECX * TYPE randArray]		; address od randArray + ((quotient-1) * 1)
 
-	; 
+	; combine the middle two values (as a 8-bit reigster) for another division
 	ADD		AL, DL
-	DIV		BL
-
-	; quotient AL remainder AH
-	CMP		AH, 0
-	JNE		_roundUp
-	JMP		_showMedian
+	DIV		BL											; divisor = 2 to get the average of the two values
+	
+	; rounding the average
+	CMP		AH, 0										; remainder(AH) : quotient(AL) 
+	JNE		_roundUp									; if remainder is not zero, jump to _roundUp
+	JMP		_showMedian									; if remainder is zero, jump to _showMedian
 
 _roundUp:
-	MOV		AH, 0
-	INC		AL
+	MOV		AH, 0										; set the upper register(AH) of AX to zero
+	INC		AL											; round up
 	JMP		_showMedian
 	
 _odd:
 	DEC		ECX
-	MOV		AL, [randArray + ECX * TYPE randArray]
+	MOV		AL, [randArray + ECX * TYPE randArray]		; address of randArray + ((quotient-1) * 1)
 
 
 	; show the median value
 _showMedian:
-	CALL	WriteDec
+	CALL	WriteDec									; EAX cleared other than the 8-bit register(AL)
 	CALL	CrLf
 	CALL	CrLf
 	
-	; restore register
+	; restore registers
 	POP		ECX
 	POP		EBX
 	POP		EAX
 	POP		EDX
 
-	RET		4
+	RET		4											; one passed parameter									
 displayMedian	ENDP
 
 
 ; -------------------------------------------------------------------------------------------------
 ; Name: countList
-; Description: generate 200 random numbers ...
+; Description: count the number of instances of each value generated in randArray within the given 
+;				range [15,50]. Then, store each count in counts array starting with the lowest value(15). 
+;				Once the highest value(50) is counted, counts array is displayed to the user.
 ; 
-; Preconditions: 
-; Postconditions: 
+; Preconditions: proper execution of the sortList procedure to have 200 random numbers sorted in
+;				ascending order.
+; Postconditions: no changes.
 ;
-; Receives: 
-; Returns:
+; Receives: memory addresses of 'randArray' and 'counts, plus data size of 'randArray'
+;	- parameters: 'TYPE randArray' (value, input), 'randArray' (reference, input), 'counts' (reference, input)
+;					'counts' (reference, output)
+; Returns: counts array should be filled with number of instances of each value in randArray.
 ; -------------------------------------------------------------------------------------------------
 countList		PROC	USES	EBP
 	MOV		EBP, ESP									; set new EBP
@@ -389,28 +402,27 @@ countList		PROC	USES	EBP
 
 	; set registers
 	MOV		EAX, 0
-	MOV		EBX, LO
-	MOV		ECX, ARRAYSIZE
-	MOV		ESI, [EBP+12]
-	MOV		EDI, [EBP+8]
+	MOV		EBX, LO										; starting counting target (15)
+	MOV		ECX, ARRAYSIZE								; move through 200 values
+	MOV		ESI, [EBP+12]								; address of randArray
+	MOV		EDI, [EBP+8]								; address of counts
 
-	;
+	; 
 _count:
-	CMP		[ESI], BL
-	JE		_addCount
-	MOV		[EDI], AL
-	ADD		EDI, [EBP+16]
-	MOV		EAX, 0
+	CMP		[ESI], BL									; value in randArray vs. counting target 
+	JE		_addCount									; if value == counting target, jump to _addCount
+	MOV		[EDI], AL									; store the current count in counts array
+	ADD		EDI, [EBP+16]								; increment EDI by 1
+	MOV		EAX, 0										; reset count to zero
 	INC		EBX
 	JMP		_count
 
 _addCount:
-	INC		EAX
-	ADD		ESI, [EBP+16]
+	INC		EAX											; increase count
+	ADD		ESI, [EBP+16]								; increment ESI by 1
 	LOOP	_count
 	
-	; add the last count to the counts array
-	MOV		[EDI], AL
+	MOV		[EDI], AL									; append the last count to the counts array
 
 	; restore registers
 	POP		EDI
@@ -480,7 +492,7 @@ displayList			PROC	USES	EBP
 	PUSH	EAX
 
 	; write prompt
-	MOV		EDX, [EBP+24]
+	MOV		EDX, [EBP+24]								; msg prompt
 	CALL	WriteString
 
 	; set registers
@@ -512,7 +524,6 @@ _newLine:
 	; restore registers used
 _nextProc:
 	CALL	CrLf
-	
 	POP		EAX
 	POP		EBX
 	POP		EDX
