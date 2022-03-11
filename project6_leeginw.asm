@@ -18,14 +18,12 @@ INCLUDE Irvine32.inc
 ; Receives:
 ;
 ; ------------------------------------------------------------------------
-mGetString	MACRO		intro, error, array, string, ascii, sign 
+mGetString	MACRO		intro, string, length
 	; preserve registers
 	PUSH	EDX
+	PUSH	EBX
 	PUSH	ECX
 	PUSH	EAX
-	PUSH	EDI
-	PUSH	ESI
-	PUSH	EBX
 	
 _input:
 	; display input prompt
@@ -33,79 +31,18 @@ _input:
 	CALL	WriteString
 	
 	; read user input
+	
 	MOV		EDX, string						; OFFSET inputString	
-	MOV		ECX, LENGTH_LIMIT+1				; invalid if greater than or equal to 12 digits
+	MOV		EBX, length						; OFFSET inputLength
+	MOV		ECX, LENGTH_LIMIT+1				; invalid if equal to 12 digits
 	CALL	ReadString
 	
-	MOV		ECX, EAX						; set repeat number for validation loop
-
-	; [validation]
-	; _error if input length greater than or equal to 12 digits
-	CMP		EAX, LENGTH_LIMIT
-	JAE		_error
+	MOV		[EBX], EAX						; store number of characters
 	
-	; first character check
-	MOV		ESI, string						; OFFSET inputString 
-	MOV		EDI, ascii						; OFFSET ascii
-
-	LODSB									; [ESI] -> AL
-
-	SCASB									; AL - [EDI]
-	JE		_firstPlus
-	SCASB
-	JE		_firstMinus
-	SCASB
-	JB		_error
-	SCASB
-	JA		_error
-
-	JMP		_firstInteger
-	
-_firstPlus:
-	; if first char is 43d (+)
-	MOV		sign, DWORD PTR 1				; 1 for positive
-	JMP		_remainChar
-
-_firstMinus:
-	; if first char is 45d (-)
-	MOV		sign, DWORD PTR 2				; 2 for positive
-	JMP		_remainChar
-
-_firstInteger:
-	MOV		sign, DWORD PTR 0				; 0 for integer
-
-	; remaining character check
-_remainChar:
-	LOOP	_validLoop
-	JMP		_return
-
-_validLoop:
-	MOV		EDI, ascii						; reset EDI
-	ADD		EDI, 2							; no need to checck for + and - signs
-
-	LODSB									; load the next char into AL
-
-	SCASB
-	JB		_error
-	SCASB
-	JA		_error
-
-	LOOP	_validLoop
-	JMP		_return
-
-_error:
-	; display error message for an invalid input
-	MOV		EDX, error						; OFFSET error_msg
-	CALL	WriteString
-	JMP		_input							; return to _input
-
 	; restore registers
-_return:
-	POP		EBX
-	POP		ESI
-	POP		EDI
 	POP		EAX
 	POP		ECX
+	POP		EBX
 	POP		EDX
 
 ENDM
@@ -156,8 +93,11 @@ avg_msg			BYTE		13,10,"The truncated average (to the nearest decimal): ", 0
 farewell_msg	BYTE		13,10,"Thanks for playing!",0
 
 ; global variables
+inputString		BYTE		LENGTH_LIMIT DUP(?)
+inputLength		DWORD		?
+
+
 inputArray		BYTE		ARRAYSIZE DUP(?)
-inputString		BYTE		LENGTH_LIMIT-1 DUP(?)
 
 ascii			BYTE		PLUS, MINUS, ZERO, NINE
 signChar		DWORD		?
@@ -174,12 +114,8 @@ main PROC
 	CALL	introduction
 	
 	; read valid user input 10 times
-	PUSH	signChar							; EBP+28
-	PUSH	OFFSET		ascii					; EBP+24
-	PUSH	OFFSET		inputString				; EBP+20
-
-	PUSH	OFFSET		inputArray				; EBP+16		*
-	PUSH	OFFSET		error_msg				; EBP+12
+	PUSH	OFFSET		inputLength				; EBP+16
+	PUSH	OFFSET		inputString				; EBP+12
 	PUSH	OFFSET		input_msg				; EBP+8
 	CALL ReadVal	
 	
@@ -227,16 +163,17 @@ introduction	ENDP
 ReadVal			PROC USES EBP
 	MOV		EBP, ESP
 
-	; call macro with parameters: intro, error, array*, string, ascii, sign
-_getValid:
-	mGetString			[EBP+8], [EBP+12], [EBP+16], [EBP+20], [EBP+24], [EBP+28]
+	; call macro with parameters: OFFSET intro, OFFSET string, OFFSET length
+	mGetString			[EBP+8], [EBP+12], [EBP+16]
 
 	; convert ASCII to a numeric value
 
+	; validate
+
+	; store in inputArray
 
 
-
-	RET		24
+	RET		12
 ReadVal			ENDP
 
 
