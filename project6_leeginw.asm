@@ -16,9 +16,11 @@ INCLUDE Irvine32.inc
 ; Description:
 ;
 ; Receives:
+;	- parameters: input_msg (reference, input), countAllowed (value, input),
+;				inputString (reference, output), inputLength (reference, output)
 ;
 ; ------------------------------------------------------------------------
-mGetString	MACRO		intro, string, length
+mGetString	MACRO		intro, string, length, count
 	; preserve registers
 	PUSH	EDX
 	PUSH	EBX
@@ -31,13 +33,11 @@ _input:
 	CALL	WriteString
 	
 	; read user input
-	
 	MOV		EDX, string						; OFFSET inputString	
 	MOV		EBX, length						; OFFSET inputLength
-	MOV		ECX, LENGTH_LIMIT+1				; invalid if equal to 12 digits
+	MOV		ECX, count						; countAllowed (13)
 	CALL	ReadString
-	
-	MOV		[EBX], EAX						; store number of characters
+	MOV		[EBX], EAX						; store number of bytes
 	
 	; restore registers
 	POP		EAX
@@ -95,9 +95,10 @@ farewell_msg	BYTE		13,10,"Thanks for playing!",0
 ; global variables
 inputString		BYTE		LENGTH_LIMIT DUP(?)
 inputLength		DWORD		?
+countAllowed	DWORD		LENGTH_LIMIT+1
 
-
-inputArray		BYTE		ARRAYSIZE DUP(?)
+inputValue		SDWORD		?
+inputArray		SDWORD		ARRAYSIZE DUP(?)
 
 ascii			BYTE		PLUS, MINUS, ZERO, NINE
 signChar		DWORD		?
@@ -114,6 +115,11 @@ main PROC
 	CALL	introduction
 	
 	; read valid user input 10 times
+	PUSH	OFFSET		inputArray				; EBP+28
+	PUSH	OFFSET		inputValue				; EBP+24
+
+	PUSH	countAllowed						; EBP+20
+
 	PUSH	OFFSET		inputLength				; EBP+16
 	PUSH	OFFSET		inputString				; EBP+12
 	PUSH	OFFSET		input_msg				; EBP+8
@@ -163,19 +169,88 @@ introduction	ENDP
 ReadVal			PROC USES EBP
 	MOV		EBP, ESP
 
-	; call macro with parameters: OFFSET intro, OFFSET string, OFFSET length
-	mGetString			[EBP+8], [EBP+12], [EBP+16]
+	; preserve registers
+	PUSH	ECX
+	PUSH	EAX
+	PUSH	EDI
 
-	; convert ASCII to a numeric value
+	MOV		ECX, ARRAYSIZE						; set number of valid inputs
+	MOV		EDI, [EBP+28]						; point EDI to inputArray
 
-	; validate
+	; call macro with parameters: OFFSET intro, OFFSET string, OFFSET length, count
+_getValue:
+	mGetString			[EBP+8], [EBP+12], [EBP+16], [EBP+20]
+	
+	PUSH	[EBP+12]
+	CALL	Conversion
 
-	; store in inputArray
+	; [sub] inputValue
+	MOV		EAX, inputValue
 
+	; loop 10 times to load 10 valid user inputs in inputArray
+	STOSD
+	LOOP	_getValue
 
-	RET		12
+	; restore registers
+	POP		EDI
+	POP		EAX
+	POP		ECX
+
+	RET		28
 ReadVal			ENDP
 
+
+; ------------------------------------------------------------------------
+; Name: conversion
+; Description:
+;
+; Preconditions:
+; Postconditions:
+;
+; Receives:
+; Returns:
+; ------------------------------------------------------------------------
+Conversion		PROC USES EBP
+	MOV		EBP, ESP
+	
+	; convert ASCII to a numeric value
+	PUSH	ESI
+	PUSH	ECX
+	PUSH	EAX
+	PUSH	EBX
+	PUSH	EDX
+
+	; mov inputString to ESI
+	MOV		ESI, [EBP+8]						; point ESI to inputString
+
+	MOV		ECX, inputLength					; [sub] inputLength
+	MOV		inputValue, 0
+
+	; validation!
+
+_conversion:
+	MOV		EAX, inputValue						; [sub] inputValue
+	MOV		EBX, 10
+	MUL		EBX	
+	MOV		inputValue, EAX
+
+	MOV		EAX, 0								; reset EAX
+	
+	LODSB
+
+	SUB		AL, 48
+	ADD		inputValue, EAX						; [sub] inputValue
+
+	LOOP	_conversion
+
+	POP		EDX
+	POP		EBX
+	POP		EAX
+	POP		ECX
+	POP		ESI
+
+	RET		4
+Conversion		ENDP
 
 ; ------------------------------------------------------------------------
 ; Name:
@@ -188,7 +263,7 @@ ReadVal			ENDP
 ; Returns:
 ; ------------------------------------------------------------------------
 WriteVal		PROC USES EBP
-	
+	MOV		EBP, ESP
 
 
 	RET
