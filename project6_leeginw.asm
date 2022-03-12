@@ -20,12 +20,10 @@ INCLUDE Irvine32.inc
 ;				inputString (reference, output), inputLength (reference, output)
 ;
 ; ------------------------------------------------------------------------
-mGetString	MACRO		intro, string, length, count
-	; preserve registers
+mGetString	MACRO		intro, string, count
+	; preserve registers [except for EAX]
 	PUSH	EDX
-	PUSH	EBX
 	PUSH	ECX
-	PUSH	EAX
 	
 _input:
 	; display input prompt
@@ -33,16 +31,12 @@ _input:
 	CALL	WriteString
 	
 	; read user input
-	MOV		EDX, string						; OFFSET inputString	
-	MOV		EBX, length						; OFFSET inputLength
+	MOV		EDX, string						; OFFSET inputString
 	MOV		ECX, count						; countAllowed (13)
 	CALL	ReadString
-	MOV		[EBX], EAX						; store number of bytes
 	
-	; restore registers
-	POP		EAX
+	; restore registers [except for EAX]
 	POP		ECX
-	POP		EBX
 	POP		EDX
 
 ENDM
@@ -94,14 +88,15 @@ farewell_msg	BYTE		13,10,"Thanks for playing!",0
 
 ; global variables
 inputString		BYTE		LENGTH_LIMIT DUP(?)
-inputLength		DWORD		?
 countAllowed	DWORD		LENGTH_LIMIT+1
-
-inputValue		SDWORD		?
 inputArray		SDWORD		ARRAYSIZE DUP(?)
+
+
 
 ascii			BYTE		PLUS, MINUS, ZERO, NINE
 signChar		DWORD		?
+
+
 
 
 sum				SDWORD		?
@@ -115,17 +110,21 @@ main PROC
 	CALL	introduction
 	
 	; read valid user input 10 times
-	PUSH	OFFSET		inputArray				; EBP+28
-	PUSH	OFFSET		inputValue				; EBP+24
+	MOV		ECX, ARRAYSIZE						; set number of valid inputs
+	MOV		EDI, OFFSET inputArray				; 
 
-	PUSH	countAllowed						; EBP+20
-
-	PUSH	OFFSET		inputLength				; EBP+16
+_readLoop:
+	PUSH	countAllowed						; EBP+16
 	PUSH	OFFSET		inputString				; EBP+12
 	PUSH	OFFSET		input_msg				; EBP+8
 	CALL ReadVal	
 	
+	LOOP	_readLoop
+
 	; display integer list with sum and average of those integers
+	
+
+
 	CALL WriteVal
 
 	Invoke ExitProcess,0						; exit to operating system
@@ -163,40 +162,29 @@ introduction	ENDP
 ; Preconditions:
 ; Postconditions:
 ;		- parameters: 'input_msg' (reference, input)
-; Receives:
+; Receives: 
 ; Returns:
 ; ------------------------------------------------------------------------
 ReadVal			PROC USES EBP
 	MOV		EBP, ESP
 
 	; preserve registers
-	PUSH	ECX
 	PUSH	EAX
-	PUSH	EDI
 
-	MOV		ECX, ARRAYSIZE						; set number of valid inputs
-	MOV		EDI, [EBP+28]						; point EDI to inputArray
-
-	; call macro with parameters: OFFSET intro, OFFSET string, OFFSET length, count
-_getValue:
-	mGetString			[EBP+8], [EBP+12], [EBP+16], [EBP+20]
+	; call macro with parameters: OFFSET intro, OFFSET string, count
+	mGetString			[EBP+8], [EBP+12], [EBP+16]
 	
-	PUSH	[EBP+12]
-	CALL	Conversion
+	PUSH	EAX									; inputLength from mGetString
+	PUSH	[EBP+12]							; OFFSET inputString from mGetString
 
-	; [sub] inputValue
-	MOV		EAX, inputValue
+	CALL	Conversion							; 
 
-	; loop 10 times to load 10 valid user inputs in inputArray
-	STOSD
-	LOOP	_getValue
+	STOSD										; EAX to OFFSET inputArray
 
 	; restore registers
-	POP		EDI
 	POP		EAX
-	POP		ECX
 
-	RET		28
+	RET		12
 ReadVal			ENDP
 
 
@@ -205,51 +193,53 @@ ReadVal			ENDP
 ; Description:
 ;
 ; Preconditions:
-; Postconditions:
+; Postconditions: EAX
 ;
 ; Receives:
 ; Returns:
 ; ------------------------------------------------------------------------
-Conversion		PROC USES EBP
-	MOV		EBP, ESP
-	
-	; convert ASCII to a numeric value
+Conversion		PROC
+	LOCAL	val:SDWORD
+
+	; preserve registers [except for EAX]
 	PUSH	ESI
 	PUSH	ECX
-	PUSH	EAX
 	PUSH	EBX
 	PUSH	EDX
 
-	; mov inputString to ESI
-	MOV		ESI, [EBP+8]						; point ESI to inputString
+	MOV		ESI, [EBP+8]						; point ESI to inputString from mGetString
+	MOV		ECX, [EBP+12]						; length of inputString to ECX
 
-	MOV		ECX, inputLength					; [sub] inputLength
-	MOV		inputValue, 0
+	MOV		val, 0								; reset val to zero
 
 	; validation!
 
-_conversion:
-	MOV		EAX, inputValue						; [sub] inputValue
+
+	; convert valid input to signed integer
+_convertLoop:
+	MOV		EAX, val							; prep EAX for MUL
 	MOV		EBX, 10
-	MUL		EBX	
-	MOV		inputValue, EAX
+	MUL		EBX									; multiply by 10 to increase decimal digit
+	MOV		val, EAX							
 
 	MOV		EAX, 0								; reset EAX
 	
-	LODSB
+	LODSB										; load one byte from inputString to AL 
 
-	SUB		AL, 48
-	ADD		inputValue, EAX						; [sub] inputValue
+	SUB		AL, 48								; convert ASCII to decimal value
+	ADD		val, EAX							; combine the latest decimal digit
 
-	LOOP	_conversion
+	LOOP	_convertLoop						; LOOP until all inputString bytes are converted
 
+	MOV		EAX, val							; preserve valid numeric value in EAX
+
+	; restore registers [except for EAX]
 	POP		EDX
 	POP		EBX
-	POP		EAX
 	POP		ECX
 	POP		ESI
 
-	RET		4
+	RET		8
 Conversion		ENDP
 
 ; ------------------------------------------------------------------------
@@ -264,6 +254,21 @@ Conversion		ENDP
 ; ------------------------------------------------------------------------
 WriteVal		PROC USES EBP
 	MOV		EBP, ESP
+
+
+	; sum
+
+	; average
+
+	; convert number to ASCII
+
+	; display
+
+		; list
+
+		; sum
+
+		; average
 
 
 	RET
