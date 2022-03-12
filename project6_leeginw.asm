@@ -78,7 +78,7 @@ ENDM
 
 
 ; global constants
-ARRAYSIZE = 2
+ARRAYSIZE = 10
 LENGTH_LIMIT = 12								; max number of digits for a 32-bit register
 
 ; ASCII 
@@ -106,7 +106,7 @@ array_msg		BYTE		13,10,"10 valid integers you entered: ",13,10,0
 sum_msg			BYTE		13,10,"The sum of 10 valid integers you entered: ",0
 avg_msg			BYTE		13,10,"The truncated average (to the nearest decimal): ", 0
 
-farewell_msg	BYTE		13,10,"Thanks for playing!",0
+farewell_msg	BYTE		13,10,13,10,"Thanks for playing!",0
 
 ; global variables
 inputArray		SDWORD		ARRAYSIZE DUP(?)
@@ -142,6 +142,8 @@ _readLoop:
 	LOOP	_readLoop
 
 	; display integer list with sum and average of those integers
+	PUSH	OFFSET		farewell_msg			; EBP+28
+	PUSH	OFFSET		avg_msg					; EBP+24
 	PUSH	OFFSET		sum_msg					; EBP+20
 	PUSH	OFFSET		displayString			; EBP+16
 	PUSH	OFFSET		array_msg				; EBP+12
@@ -287,8 +289,11 @@ WriteVal		PROC
 	PUSH	EBX
 	PUSH	EDX
 	PUSH	EDI
+	PUSH	ECX
 
 	; 
+	
+	MOV		ECX, ARRAYSIZE
 	MOV		sum, 0
 	MOV		ESI, [EBP+8]						; OFFSET inputArray
 	
@@ -371,14 +376,13 @@ _last:
 ; convert number to ASCII: sum
 ;
 ; -------------------------------------
-	; prompt for list of signed integers
+	; prompt for sum
 	MOV		EDX, [EBP+20]						; OFFSET sum_msg
 	CALL	WriteString
 
-	MOV		count, 1
-	MOV		ESI, sum
+	MOV		count, 0
+	MOV		EAX, sum
 
-	LODSD										; [ESI] -> EAX
 _integerSum:		
 	CDQ
 	MOV		EBX, 10
@@ -393,6 +397,8 @@ _integerSum:
 
 	MOV		EDX, 0
 
+	INC		count
+
 	CMP		EAX, 0		
 	JNE		_integerSum
 
@@ -403,16 +409,48 @@ _integerSum:
 ;
 ; -------------------------------------
 
+	; prompt for average
+	MOV		EDX, [EBP+24]						; OFFSET avg_msg
+	CALL	WriteString
 
+	MOV		count, 0
+	MOV		EAX, avg
+
+_integerAverage:		
+	CDQ
+	MOV		EBX, 10
+	IDIV	EBX
+	
+	ADD		EDX, 48
+
+	PUSH	EAX
+	MOV		EAX, EDX	
+	STOSB										; AL -> [EDI]
+	POP		EAX
+
+	MOV		EDX, 0
+
+	INC		count
+
+	CMP		EAX, 0		
+	JNE		_integerAverage
+
+	mDisplayString		EDI, count				; read backward using count
+
+
+	; prompt for thank you
+	MOV		EDX, [EBP+28]						; OFFSET farewell_msg
+	CALL	WriteString
 
 	; restore registers
+	POP		ECX
 	POP		EDI
 	POP		EDX
 	POP		EBX
 	POP		EAX
 	POP		ESI
 
-	RET		16
+	RET		24
 WriteVal		ENDP
 
 END main
