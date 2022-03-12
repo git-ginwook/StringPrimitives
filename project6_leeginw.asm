@@ -26,7 +26,6 @@ mGetString	MACRO		intro, string, count, length
 	PUSH	ECX
 	PUSH	EAX
 	
-_input:
 	; display input prompt
 	MOV		EDX, intro						; OFFSET input_msg
 	CALL	WriteString
@@ -51,15 +50,35 @@ ENDM
 ; Receives:
 ;
 ; ------------------------------------------------------------------------
-mDisplayString MACRO
+mDisplayString MACRO	string, count
+	LOCAL	_displayLoop
+	; preserve registers
+	PUSH	ESI
+	PUSH	ECX
+	
+	MOV		ECX, count
 
+	MOV		ESI, string	
+	DEC		ESI	
 
+_displayLoop:	
+	STD	
+	LODSB
+
+	CALL	WriteChar
+	LOOP	_displayLoop
+
+	CLD
+
+	; restore registers
+	POP		ECX
+	POP		ESI
 
 ENDM
 
 
 ; global constants
-ARRAYSIZE = 10
+ARRAYSIZE = 2
 LENGTH_LIMIT = 12								; max number of digits for a 32-bit register
 
 ; ASCII 
@@ -83,7 +102,7 @@ intro_msg		BYTE		"Project 6: Low-Level I/O Procedures",13,10
 input_msg		BYTE		"Please enter a signed decimal integer: ",0
 error_msg		BYTE		"ERROR: your number is either too big or not a signed decimal integer.",13,10,0
 
-array_msg		BYTE		"10 valid integers you entered: ",13,10,0
+array_msg		BYTE		13,10,"10 valid integers you entered: ",13,10,0
 sum_msg			BYTE		13,10,"The sum of 10 valid integers you entered: ",0
 avg_msg			BYTE		13,10,"The truncated average (to the nearest decimal): ", 0
 
@@ -96,14 +115,11 @@ inputLength		DWORD		?
 countAllowed	DWORD		LENGTH_LIMIT+1
 inputString		BYTE		LENGTH_LIMIT DUP(?)
 
+displayString	BYTE		LENGTH_LIMIT DUP(?)
+
 ascii			BYTE		PLUS, MINUS, ZERO, NINE
 signChar		DWORD		?
 
-
-
-
-sum				SDWORD		?
-average			SDWORD		?
 
 .code
 main PROC
@@ -121,17 +137,16 @@ _readLoop:
 	PUSH	countAllowed						; EBP+16
 	PUSH	OFFSET		inputString				; EBP+12
 	PUSH	OFFSET		input_msg				; EBP+8
-	CALL ReadVal	
+	CALL	ReadVal	
 	
 	LOOP	_readLoop
 
 	; display integer list with sum and average of those integers
-	
-
-
-	CALL WriteVal
-
-
+	PUSH	OFFSET		sum_msg					; EBP+20
+	PUSH	OFFSET		displayString			; EBP+16
+	PUSH	OFFSET		array_msg				; EBP+12
+	PUSH	OFFSET		inputArray				; EBP+8
+	CALL	WriteVal
 
 	Invoke ExitProcess,0						; exit to operating system
 main ENDP
@@ -218,8 +233,12 @@ Conversion		PROC
 
 	MOV		val, 0								; reset val to zero
 
-	; validation!
 
+
+; -------------------------------------
+; validation!
+;
+; -------------------------------------
 
 	; convert valid input to signed integer
 _convertLoop:
@@ -256,28 +275,144 @@ Conversion		ENDP
 ; Postconditions:
 ;
 ; Receives:
+;
 ; Returns:
 ; ------------------------------------------------------------------------
-WriteVal		PROC USES EBP
-	MOV		EBP, ESP
+WriteVal		PROC
+	LOCAL	sum:SDWORD, avg:SDWORD, count:DWORD
+
+	; preserve registers
+	PUSH	ESI
+	PUSH	EAX
+	PUSH	EBX
+	PUSH	EDX
+	PUSH	EDI
+
+	; 
+	MOV		sum, 0
+	MOV		ESI, [EBP+8]						; OFFSET inputArray
+	
+	; sum calculation
+_sumLoop:
+	LODSD
+	ADD		sum, EAX
+	LOOP	_sumLoop
+
+	; average calculation
+	MOV		avg, 0
+
+	MOV		EAX, sum
+	CDQ
+	MOV		EBX, ARRAYSIZE
+	IDIV	EBX
+	
+	MOV		avg, EAX
+
+	; prompt for list of signed integers
+	MOV		EDX, [EBP+12]						; OFFSET array_msg
+	CALL	WriteString
+
+; -------------------------------------
+; convert number to ASCII: list
+;
+; -------------------------------------
+	MOV		EAX, 0
+	MOV		EDX, 0
+	MOV		ECX, ARRAYSIZE
+
+	MOV		EDI, [EBP+16]						; OFFSET displayString BYTE
+	MOV		ESI, [EBP+8]						; OFFSET inputArray SDWORD
+
+	MOV		count, 2
+	
+_loadInteger:	
+	MOV		[EDI], BYTE PTR 32					; space
+	INC		EDI
+	MOV		[EDI], BYTE PTR 44					; comma
+	INC		EDI
+
+	LODSD										; [ESI] -> EAX
+_integer:		
+	CDQ
+	MOV		EBX, 10
+	IDIV	EBX
+	
+	ADD		EDX, 48
+	
+
+	PUSH	EAX
+
+	MOV		EAX, EDX	
+
+	STOSB										; AL -> [EDI]
+	POP		EAX
+
+	MOV		EDX, 0
+
+	INC		count
+
+	CMP		EAX, 0		
+	JNE		_integer
+
+	mDisplayString		EDI, count				; read backward using count
+
+	MOV		count, 0
+
+	CMP		ECX, 2
+	JE		_last
+
+	ADD		count, 2
+
+_last:
+	LOOP	_loadInteger
 
 
-	; sum
+; -------------------------------------
+; convert number to ASCII: sum
+;
+; -------------------------------------
+	; prompt for list of signed integers
+	MOV		EDX, [EBP+20]						; OFFSET sum_msg
+	CALL	WriteString
 
-	; average
+	MOV		count, 1
+	MOV		ESI, sum
 
-	; convert number to ASCII
+	LODSD										; [ESI] -> EAX
+_integerSum:		
+	CDQ
+	MOV		EBX, 10
+	IDIV	EBX
+	
+	ADD		EDX, 48
 
-	; display
+	PUSH	EAX
+	MOV		EAX, EDX	
+	STOSB										; AL -> [EDI]
+	POP		EAX
 
-		; list with Loop
+	MOV		EDX, 0
 
-		; sum
+	CMP		EAX, 0		
+	JNE		_integerSum
 
-		; average
+	mDisplayString		EDI, count				; read backward using count
+	
+; -------------------------------------
+; convert number to ASCII: average
+;
+; -------------------------------------
 
 
-	RET
+
+	; restore registers
+	POP		EDI
+	POP		EDX
+	POP		EBX
+	POP		EAX
+	POP		ESI
+
+	RET		16
 WriteVal		ENDP
 
 END main
