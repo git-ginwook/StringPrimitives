@@ -20,10 +20,11 @@ INCLUDE Irvine32.inc
 ;				inputString (reference, output), inputLength (reference, output)
 ;
 ; ------------------------------------------------------------------------
-mGetString	MACRO		intro, string, count
-	; preserve registers [except for EAX]
+mGetString	MACRO		intro, string, count, length
+	; preserve registers
 	PUSH	EDX
 	PUSH	ECX
+	PUSH	EAX
 	
 _input:
 	; display input prompt
@@ -34,8 +35,10 @@ _input:
 	MOV		EDX, string						; OFFSET inputString
 	MOV		ECX, count						; countAllowed (13)
 	CALL	ReadString
+	MOV		length, EAX
 	
-	; restore registers [except for EAX]
+	; restore registers
+	POP		EAX
 	POP		ECX
 	POP		EDX
 
@@ -87,11 +90,11 @@ avg_msg			BYTE		13,10,"The truncated average (to the nearest decimal): ", 0
 farewell_msg	BYTE		13,10,"Thanks for playing!",0
 
 ; global variables
-inputString		BYTE		LENGTH_LIMIT DUP(?)
-countAllowed	DWORD		LENGTH_LIMIT+1
 inputArray		SDWORD		ARRAYSIZE DUP(?)
 
-
+inputLength		DWORD		?
+countAllowed	DWORD		LENGTH_LIMIT+1
+inputString		BYTE		LENGTH_LIMIT DUP(?)
 
 ascii			BYTE		PLUS, MINUS, ZERO, NINE
 signChar		DWORD		?
@@ -114,6 +117,7 @@ main PROC
 	MOV		EDI, OFFSET inputArray				; 
 
 _readLoop:
+	PUSH	inputLength							; EBP+20
 	PUSH	countAllowed						; EBP+16
 	PUSH	OFFSET		inputString				; EBP+12
 	PUSH	OFFSET		input_msg				; EBP+8
@@ -126,6 +130,8 @@ _readLoop:
 
 
 	CALL WriteVal
+
+
 
 	Invoke ExitProcess,0						; exit to operating system
 main ENDP
@@ -172,9 +178,9 @@ ReadVal			PROC USES EBP
 	PUSH	EAX
 
 	; call macro with parameters: OFFSET intro, OFFSET string, count
-	mGetString			[EBP+8], [EBP+12], [EBP+16]
+	mGetString			[EBP+8], [EBP+12], [EBP+16], [EBP+20]
 	
-	PUSH	EAX									; inputLength from mGetString
+	PUSH	[EBP+20]							; inputLength from mGetString
 	PUSH	[EBP+12]							; OFFSET inputString from mGetString
 
 	CALL	Conversion							; 
@@ -184,7 +190,7 @@ ReadVal			PROC USES EBP
 	; restore registers
 	POP		EAX
 
-	RET		12
+	RET		16
 ReadVal			ENDP
 
 
@@ -264,7 +270,7 @@ WriteVal		PROC USES EBP
 
 	; display
 
-		; list
+		; list with Loop
 
 		; sum
 
