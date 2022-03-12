@@ -7,6 +7,9 @@ TITLE Project 6     (project6_leeginw.asm)
 ; Project Number: 06                 
 ; Due Date: 3/13/2022
 ; Description: 
+;	input assumption: 
+;		1) no calculations (e.g., "12379+893", "180-2879", "1123x19")
+;		2) sum of any two integers won't exceed a 32-register
 
 INCLUDE Irvine32.inc
 
@@ -16,8 +19,7 @@ INCLUDE Irvine32.inc
 ; Description:
 ;
 ; Receives:
-;	- parameters: input_msg (reference, input), countAllowed (value, input),
-;				inputString (reference, output), inputLength (reference, output)
+;	- parameters:
 ;
 ; ------------------------------------------------------------------------
 mGetString	MACRO		intro, string, count, length
@@ -48,7 +50,7 @@ ENDM
 ; Description:
 ;
 ; Receives:
-;
+;	- parameters: 
 ; ------------------------------------------------------------------------
 mDisplayString MACRO	string, count
 	LOCAL	_displayLoop
@@ -78,8 +80,11 @@ ENDM
 
 
 ; global constants
-ARRAYSIZE = 10
-LENGTH_LIMIT = 12								; max number of digits for a 32-bit register
+ARRAYSIZE = 2
+LENGTH_LIMIT = 12								; 12 digits exceed a 32-register (even with a sign char)
+
+MAX = 2147483647								; 2^31 - 1
+MIN = -2147483647								; -2^31
 
 ; ASCII 
 PLUS = 43
@@ -199,8 +204,13 @@ ReadVal			PROC USES EBP
 	
 	PUSH	[EBP+20]							; inputLength from mGetString
 	PUSH	[EBP+12]							; OFFSET inputString from mGetString
-
 	CALL	Conversion							; 
+
+	; check EAX for invalid sign
+
+	; check for signChar
+
+
 
 	STOSD										; EAX to OFFSET inputArray
 
@@ -230,37 +240,91 @@ Conversion		PROC
 	PUSH	EBX
 	PUSH	EDX
 
-	MOV		ESI, [EBP+8]						; point ESI to inputString from mGetString
-	MOV		ECX, [EBP+12]						; length of inputString to ECX
-
-	MOV		val, 0								; reset val to zero
-
-
-
 ; -------------------------------------
-; validation!
+; conversion!
 ;
 ; -------------------------------------
+	; initial setup
+	MOV		ESI, [EBP+8]						; point ESI to inputString from mGetString
+	MOV		ECX, [EBP+12]						; length of inputString to ECX
+	MOV		val, 0								; initialize val
 
 	; convert valid input to signed integer
+	
 _convertLoop:
 	MOV		EAX, val							; prep EAX for MUL
 	MOV		EBX, 10
 	MUL		EBX									; multiply by 10 to increase decimal digit
+
 	MOV		val, EAX							
 
 	MOV		EAX, 0								; reset EAX
 	
 	LODSB										; load one byte from inputString to AL 
 
-	SUB		AL, 48								; convert ASCII to decimal value
+	SUB		AL, 48								; convert ASCII to decimal value	
 	ADD		val, EAX							; combine the latest decimal digit
 
 	LOOP	_convertLoop						; LOOP until all inputString bytes are converted
 
 	MOV		EAX, val							; preserve valid numeric value in EAX
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; -------------------------------------
+; validation!
+;
+; -------------------------------------
+	; initial setup
+;	MOV		ESI, [EBP+8]						; point ESI to inputString from mGetString
+;	MOV		ECX, [EBP+12]						; length of inputString to ECX
+;	MOV		EAX, 0								; initialize EAX
+
+
+	; first char
+;	DEC		ECX									; adjust count for the first char test
+
+;	LODSB										; [ESI] -> AL
+;	CALL	isDigit
+;	JNZ		_notDigit
+
+	; if a digit
+;_remaining:
+;	LODSB
+;	CALL	isDigit
+;	JNZ		_invalid
+;	LOOP	_remaining
+
+;_notDigit:
+	; '+' or '-'?
+
+		; if not, _invalid
+		; if '+' or '-', update signChar and _remaining
+			
+			; if '+', ignore and move to the next
+
+			; if '-', 
+
+	; remaining char	
+
+
+	; exceed
+
+
+	; _invalid
+;_invalid:
+	; error_msg prompt
+
+	
+
+;	JMP		_return
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
 	; restore registers [except for EAX]
+_return:
 	POP		EDX
 	POP		EBX
 	POP		ECX
