@@ -1,14 +1,20 @@
 TITLE Project 6     (project6_leeginw.asm)
 
 ; Author: GinWook Lee
-; Last Modified: 3/11/2022
+; Last Modified: 3/13/2022
 ; OSU email address: leeginw@oregonstate.edu
-; Course number/section:   CS271 Section 400
+; Course number/section: CS271 Section 400
 ; Project Number: 06                 
 ; Due Date: 3/13/2022
-; Description: 
-;	input assumption: 
-;		1) no calculations (e.g., "12379+893", "180-2879", "1123x19")
+; Description: This program asks for 10 integers and displays a list, sum, and average of those integers.
+;		Each integer must fit in a 32-register (-2^31 to 2^31-1). Otherwise, the program invalidates such input.
+;
+;		The program takes user input as a string of characters, validates and converts each number to ASCII.
+;		Then, ASCII are converted back to numbers for sum and average calculations.
+;		Once all numbers are calculated, each number reverts back to ASCII for display.		
+;	
+;	input assumptions: (no validation) 
+;		1) no arithematic calculations (e.g., "12379+893", "180-2879", "1123x19")
 ;		2) sum of any two integers won't exceed a 32-register
 
 INCLUDE Irvine32.inc
@@ -16,20 +22,20 @@ INCLUDE Irvine32.inc
 
 ; ------------------------------------------------------------------------
 ; Name: mGetString
-; Description:
+; Description: display input prompt and get user input in inputString
 ;
 ; Receives:
-;	- parameters:
-;
+;	- parameters:'input_msg' (reference, input), 'inputString' (reference, input),
+;			'countAllowed'(value, input), 'inputLength' (value, input)
 ; ------------------------------------------------------------------------
-mGetString	MACRO		intro, string, count, length
+mGetString	MACRO		input, string, count, length
 	; preserve registers
 	PUSH	EDX
 	PUSH	ECX
 	PUSH	EAX
 	
 	; display input prompt
-	MOV		EDX, intro						; OFFSET input_msg
+	MOV		EDX, input						; OFFSET input_msg
 	CALL	WriteString
 	
 	; read user input
@@ -47,10 +53,10 @@ ENDM
 
 ; ------------------------------------------------------------------------
 ; Name: mDisplayString
-; Description:
+; Description: display one valid user input at a time
 ;
 ; Receives:
-;	- parameters: 
+;	- parameters: string (reference, input), 'count' (value, input)
 ; ------------------------------------------------------------------------
 mDisplayString MACRO	string, count
 	LOCAL	_displayLoop
@@ -63,6 +69,7 @@ mDisplayString MACRO	string, count
 	MOV		ESI, string	
 	DEC		ESI	
 
+	; display characters in a numeric value
 _displayLoop:	
 	STD	
 	LODSB
@@ -81,9 +88,9 @@ ENDM
 
 ; global constants
 ARRAYSIZE = 10
-LENGTH_LIMIT = 500								; 12 digits exceed a 32-register (even with a sign char)
+LENGTH_LIMIT = 500								; extra space in case of a zero-padded number
 
-MIN = -2147483648								; -2^31
+MIN = -2147483648								; -2^31 (the lowest value that fits into a 32-register
 
 ; ASCII
 SPACE = 32
@@ -135,7 +142,7 @@ main PROC
 	
 	; read valid user input 10 times
 	MOV		ECX, ARRAYSIZE						; set number of valid inputs
-	MOV		EDI, OFFSET inputArray				; 
+	MOV		EDI, OFFSET inputArray				; EDI point to inputArray to store valid user inputs
 
 _readLoop:
 	PUSH	OFFSET		errorFlag				; EBP+28
@@ -148,7 +155,7 @@ _readLoop:
 	
 	LOOP	_readLoop
 
-	; display integer list with sum and average of those integers
+	; display integer list along with sum and average of those integers
 	PUSH	OFFSET		farewell_msg			; EBP+28
 	PUSH	OFFSET		avg_msg					; EBP+24
 	PUSH	OFFSET		sum_msg					; EBP+20
@@ -187,13 +194,17 @@ introduction	ENDP
 
 ; ------------------------------------------------------------------------
 ; Name: ReadVal
-; Description:
+; Description: ask for user input, validate and convert through Conversion procedure,
+;		and fill inputArray one at a time with a valid user input.
 ;
-; Preconditions:
-; Postconditions:
-;		- parameters: 'input_msg' (reference, input)
+; Preconditions: EDI is pointing to the next byte to store next valid user input
+; Postconditions: EDI points to the last value(10th) of inputArray
+;
 ; Receives: 
-; Returns:
+;		- parameters: 'input_msg' (reference, input), 'inputString' (reference, input),
+;			'countAllowed'(value, input), 'inputLength' (value, input),
+;			'error_msg' (reference, input), 'error_flag' (reference, input)
+; Returns: inputArray is filled with 10 valid user inputs
 ; ------------------------------------------------------------------------
 
 ReadVal			PROC USES EBP
@@ -205,28 +216,28 @@ ReadVal			PROC USES EBP
 	PUSH	EBX
 	PUSH	ECX
 
-	; call macro with parameters: OFFSET intro, OFFSET string, count
+	; call macro with parameters: OFFSET input, OFFSET string, count, length
 _getAgain:
 	mGetString			[EBP+8], [EBP+12], [EBP+16], [EBP+20]
 
 	PUSH	[EBP+28]							; OFFSET errorFlag
 	PUSH	[EBP+20]							; inputLength from mGetString
 	PUSH	[EBP+12]							; OFFSET inputString from mGetString
-	CALL	Conversion							; 
+	CALL	Conversion
 
 	; check error flag
 	MOV		ESI, [EBP+28]
 	MOV		EBX, [ESI]
 	CMP		EBX, 0
-	JE		_valid
+	JE		_valid								; jump to _valid if no error flag (0)
 
-	; error_msg prompt
+	; invalid input
 	MOV		EDX, [EBP+24]
 	CALL	WriteString							; display error_msg
 	
-	JMP		_getAgain
+	JMP		_getAgain							; return to get user input 
 
-
+	; valid input
 _valid:
 	STOSD										; EAX to OFFSET inputArray
 
@@ -242,13 +253,17 @@ ReadVal			ENDP
 
 ; ------------------------------------------------------------------------
 ; Name: conversion
-; Description:
+; Description: validate, convert, and return a valid user input to ReadVal procedure.
+;		if input is invalid, display error_msg
 ;
-; Preconditions:
-; Postconditions: EAX
+; Preconditions: user input has been entered and its memory address with the length of string
+;		should be passed through the runtime stack
+; Postconditions: user input is validated. Ask for another input in case for invalid.
 ;
 ; Receives:
-; Returns:
+;		- parameters: 'inputString' (reference, input), 'inputLength' (value, input),
+;			'error_flag' (reference, input)
+; Returns: validated input is passed back to ReadVal procedure in EAX register
 ; ------------------------------------------------------------------------
 Conversion		PROC
 	LOCAL	val:SDWORD, error:DWORD, count:DWORD, sign:DWORD
@@ -260,10 +275,16 @@ Conversion		PROC
 	PUSH	EDX
 	PUSH	EDI
 
-
 ; -------------------------------------
 ; validation!
+; validate user input with the following criteria:
+;	1) check for empty string
+;	2) check for type (character or number)
+;	3) check for sign (first digit only: + or -)
 ;
+; following validations are embedded in conversion! section:
+;	1) check for exceeding value
+;	2) check for special cases
 ; -------------------------------------
 
 	; initialize registers
@@ -277,14 +298,14 @@ Conversion		PROC
 	MOV		count, 0
 	MOV		sign, 0
 
-	; [check for empty string]
+	; 1) check for empty string
 	CMP		ECX, 0								; if length is zero
 	JE		_error
 
 	JMP		_convert
 
 
-	; [check for digit]
+	; 2) check for type (character or number)
 _digitCheck:
 	; AL has char
 	CMP		count, 0							
@@ -296,6 +317,7 @@ _digitCheck:
 	CALL	IsDigit
 	JZ		_checkedDigit						; valid digit, move to _checkedDigit
 
+	; 3) check for sign (first digit only: + or -)
 	; check if -
 	CMP		AL, MINUS							; - (ASCII)
 	JE		_minusVal
@@ -308,30 +330,23 @@ _digitCheck:
 	JMP		_error
 
 _minusVal:
-	INC		sign								;change sign
+	INC		sign								;change sign if the first char is "-"
 _plusVal:
 	DEC		ECX
 	JMP		_convertLoop
 	
-
+	; check remaining digits
 _remainDigit:
 	CALL	IsDigit
 	JZ		_checkedDigit
 	
 	JMP		_error								; not a digit, then _error
 
-
-	; [check for exceed?]
-_exceedCheck:
-
-
-
-
-
-
 ; -------------------------------------
 ; conversion!
-;
+; convert ASCII to numeric values and load into EAX
+; [check for exceed 1 and 2] invalid input if Overflow Flag gets set
+; special cases: -2,147,483,648(valid) and +2,147,483,648(invalid)
 ; -------------------------------------
 	; reset errorFlag to zero
 _convert:
@@ -380,11 +395,13 @@ _checkedDigit:
 	NEG		EAX									; if sign is 1 (negative), multiply EAX by -1
 	JMP		_return
 
+	; when overflow status flag is set
 _overFlow:
-	; special case: -2,147,483,648
-	CMP		val, MIN							; -2,147,483,648
+	; special case: -2,147,483,648 (valid)
+	CMP		val, MIN							; MIN = -2,147,483,648
 	JE		_special
 
+	; invalid input
 _error:
 	INC		error	
 	MOV		EBX, error
@@ -394,12 +411,13 @@ _error:
 
 	JMP		_return
 
+	; validate special cases
 _special:
-	; special case: 2,147,483,648 or +2,147,483,648
+	; special case: 2,147,483,648 or +2,147,483,648 (invalid)
 	CMP		sign, 0
 	JE		_error
 
-	MOV		EAX, MIN							; -2,147,483,648
+	MOV		EAX, MIN							; -2,147,483,648 is valid
 
 	; restore registers [except for EAX]
 _return:
@@ -413,15 +431,17 @@ _return:
 Conversion		ENDP
 
 ; ------------------------------------------------------------------------
-; Name:
-; Description:
+; Name: WriteVal
+; Description: display a list of valid integers, sum and truncated average of those integers.
+;	Lastly, farewell_msg is shown to the user.
 ;
-; Preconditions:
-; Postconditions:
+; Preconditions: 10 valid integers are stored in inputArray.
+; Postconditions: all messages displayed.
 ;
 ; Receives:
-;
-; Returns:
+;	- parameters: 'inputArray' (reference, input), 'array_msg' (reference, input),
+;		'displayString' (reference, input), 'sum_msg' (reference, input), 'avg_msg' (reference, input)
+; Returns: display prompts, list of valid integers, sum and average of those integers, and farewell_msg
 ; ------------------------------------------------------------------------
 WriteVal		PROC
 	LOCAL	sum:SDWORD, avg:SDWORD, count:DWORD
@@ -434,15 +454,14 @@ WriteVal		PROC
 	PUSH	EDI
 	PUSH	ECX
 
-	; 
-	
+	; initial setup
 	MOV		ECX, ARRAYSIZE
 	MOV		sum, 0
 	MOV		ESI, [EBP+8]						; OFFSET inputArray
 	
 	; sum calculation
 _sumLoop:
-	LODSD
+	LODSD										; load one number at a time: [ESI] -> AL
 	ADD		sum, EAX
 	LOOP	_sumLoop
 
@@ -451,19 +470,20 @@ _sumLoop:
 
 	MOV		EAX, sum
 	CDQ
-	MOV		EBX, ARRAYSIZE
+	MOV		EBX, ARRAYSIZE						; divide by the number of inputs: 10
 	IDIV	EBX
 	
-	MOV		avg, EAX
+	MOV		avg, EAX							; quotient only for truncated average
 
+; -------------------------------------
+; convert number to ASCII: list
+; convert to ASCII and display a list of valid integers
+; -------------------------------------
 	; prompt for list of signed integers
 	MOV		EDX, [EBP+12]						; OFFSET array_msg
 	CALL	WriteString
 
-; -------------------------------------
-; convert number to ASCII: list
-;
-; -------------------------------------
+	; initial setup
 	MOV		EAX, 0
 	MOV		EDX, 0
 	MOV		ECX, ARRAYSIZE
@@ -471,7 +491,7 @@ _sumLoop:
 	MOV		EDI, [EBP+16]						; OFFSET displayString BYTE
 	MOV		ESI, [EBP+8]						; OFFSET inputArray SDWORD
 
-	MOV		count, 2
+	MOV		count, 2							; extra counts for space(" ") and comma(",")
 	
 _loadInteger:	
 	MOV		[EDI], BYTE PTR SPACE				; space (ASCII)
@@ -480,6 +500,7 @@ _loadInteger:
 	INC		EDI
 
 	LODSD										; [ESI] -> EAX
+
 	; check for a negative value
 	CMP		EAX, 0
 	JNL		_integer							; if positive, jump to _integer
@@ -503,38 +524,34 @@ _integer:
 	
 	ADD		EDX, ZERO							; zero (ASCII)
 	
-
 	PUSH	EAX
-
-	MOV		EAX, EDX	
-
+	MOV		EAX, EDX							; move the remainder to EAX
 	STOSB										; AL -> [EDI]
-	
 	POP		EAX
 
-	MOV		EDX, 0
+	MOV		EDX, 0								; reset EDX
 
-	INC		count
+	INC		count								; count number of characters
 
-	CMP		EAX, 0		
+	CMP		EAX, 0								; done when the quotient is zero
 	JNE		_integer
 
 	mDisplayString		EDI, count				; read backward using count
 
-	MOV		count, 0
+	MOV		count, 0							; reset count
 
+	; check for the last input (10th)
 	CMP		ECX, 2
-	JE		_last
+	JE		_last								; if last, skip extra counts (no need for comma and space)
 
 	ADD		count, 2
 
 _last:
 	LOOP	_loadInteger
 
-
 ; -------------------------------------
 ; convert number to ASCII: sum
-;
+; convert to ASCII and display sum of 10 valid integers
 ; -------------------------------------
 	; prompt for sum
 	MOV		EDX, [EBP+20]						; OFFSET sum_msg
@@ -558,6 +575,7 @@ _last:
 	
 	NEG		EAX									; multiply by -1
 
+	; convert sum to ASCII
 _integerSum:		
 	CDQ
 	MOV		EDX, 0								; reset to zero
@@ -571,24 +589,24 @@ _integerSum:
 	STOSB										; AL -> [EDI]
 	POP		EAX
 
-	MOV		EDX, 0
+	MOV		EDX, 0								; reset EDX
 
 	INC		count
 
-	CMP		EAX, 0		
+	CMP		EAX, 0								; done when the quotient is zero
 	JNE		_integerSum
 
 	mDisplayString		EDI, count				; read backward using count
 	
 ; -------------------------------------
 ; convert number to ASCII: average
-;
+; convert to ASCII and display truncated average of 10 valid integers
 ; -------------------------------------
-
 	; prompt for average
 	MOV		EDX, [EBP+24]						; OFFSET avg_msg
 	CALL	WriteString
 
+	; initial setup
 	MOV		count, 0
 	MOV		EAX, avg
 
@@ -605,8 +623,9 @@ _integerSum:
 	
 	POP		EAX
 	
-	NEG		EAX									; multiply by -1
+	NEG		EAX									; multiply by -1 to revert back to positive integer
 
+	; convert average to ASCII
 _integerAvg:		
 	CDQ
 	MOV		EDX, 0								; reset to zero
@@ -620,16 +639,19 @@ _integerAvg:
 	STOSB										; AL -> [EDI]
 	POP		EAX
 
-	MOV		EDX, 0
+	MOV		EDX, 0								; reset EDX
 
 	INC		count
 
-	CMP		EAX, 0		
+	CMP		EAX, 0								; done when the quotient is zero
 	JNE		_integerAvg
 
 	mDisplayString		EDI, count				; read backward using count
 
-
+; -------------------------------------
+; conclusion:
+; display farewell_msg
+; -------------------------------------
 	; prompt for thank you
 	MOV		EDX, [EBP+28]						; OFFSET farewell_msg
 	CALL	WriteString
