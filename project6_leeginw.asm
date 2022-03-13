@@ -120,6 +120,9 @@ inputLength		DWORD		?
 countAllowed	DWORD		LENGTH_LIMIT+1
 inputString		BYTE		LENGTH_LIMIT DUP(?)
 
+errorFlag		DWORD		?
+
+
 displayString	BYTE		LENGTH_LIMIT DUP(?)
 
 ascii			BYTE		PLUS, MINUS, ZERO, NINE
@@ -138,6 +141,8 @@ main PROC
 	MOV		EDI, OFFSET inputArray				; 
 
 _readLoop:
+	PUSH	OFFSET		errorFlag				; EBP+28
+	PUSH	OFFSET		error_msg				; EBP+24
 	PUSH	inputLength							; EBP+20
 	PUSH	countAllowed						; EBP+16
 	PUSH	OFFSET		inputString				; EBP+12
@@ -198,26 +203,47 @@ ReadVal			PROC USES EBP
 
 	; preserve registers
 	PUSH	EAX
+	PUSH	ESI
+	PUSH	EBX
+	PUSH	ECX
 
 	; call macro with parameters: OFFSET intro, OFFSET string, count
+_getAgain:
 	mGetString			[EBP+8], [EBP+12], [EBP+16], [EBP+20]
-	
+
+	PUSH	[EBP+28]							; OFFSET errorFlag
 	PUSH	[EBP+20]							; inputLength from mGetString
 	PUSH	[EBP+12]							; OFFSET inputString from mGetString
 	CALL	Conversion							; 
+
+	; check error flag
+	MOV		ESI, [EBP+28]
+	MOV		EBX, [ESI]
+	CMP		EBX, 0
+	JE		_valid
+
+	; error_msg prompt
+	MOV		EDX, [EBP+24]
+	CALL	WriteString							; display error_msg
+	
+	JMP		_getAgain
+
+
 
 	; check EAX for invalid sign
 
 	; check for signChar
 
-
-
+_valid:
 	STOSD										; EAX to OFFSET inputArray
 
 	; restore registers
+	POP		ECX
+	POP		EBX
+	POP		ESI
 	POP		EAX
 
-	RET		16
+	RET		24
 ReadVal			ENDP
 
 
@@ -232,13 +258,45 @@ ReadVal			ENDP
 ; Returns:
 ; ------------------------------------------------------------------------
 Conversion		PROC
-	LOCAL	val:SDWORD
+	LOCAL	val:SDWORD, error:DWORD
 
 	; preserve registers [except for EAX]
 	PUSH	ESI
 	PUSH	ECX
 	PUSH	EBX
 	PUSH	EDX
+	PUSH	EDI
+
+
+; -------------------------------------
+; validation!
+;
+; -------------------------------------
+
+	; initial setup
+	MOV		ESI, [EBP+8]						; point ESI to inputString from mGetString
+	MOV		ECX, [EBP+12]						; length of inputString to ECX
+	
+	MOV		EAX, 0								; initialize EAX
+	MOV		error, 0							; initialize error
+
+;	is empty: 
+	CMP		ECX, 0								; if length is zero
+	JNE		_nextVal
+
+	INC		error	
+	MOV		EBX, error
+
+	MOV		EDI, [EBP+16]
+	MOV		[EDI], EBX
+
+	JMP		_return
+
+_nextVal:
+	MOV		EBX, error
+
+	MOV		EDI, [EBP+16]
+	MOV		[EDI], EBX							; reset errorFlag
 
 ; -------------------------------------
 ; conversion!
@@ -247,6 +305,7 @@ Conversion		PROC
 	; initial setup
 	MOV		ESI, [EBP+8]						; point ESI to inputString from mGetString
 	MOV		ECX, [EBP+12]						; length of inputString to ECX
+
 	MOV		val, 0								; initialize val
 
 	; convert valid input to signed integer
@@ -272,14 +331,7 @@ _convertLoop:
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; -------------------------------------
-; validation!
-;
-; -------------------------------------
-	; initial setup
-;	MOV		ESI, [EBP+8]						; point ESI to inputString from mGetString
-;	MOV		ECX, [EBP+12]						; length of inputString to ECX
-;	MOV		EAX, 0								; initialize EAX
+
 
 
 	; first char
@@ -325,12 +377,13 @@ _convertLoop:
 
 	; restore registers [except for EAX]
 _return:
+	POP		EDI
 	POP		EDX
 	POP		EBX
 	POP		ECX
 	POP		ESI
 
-	RET		8
+	RET		12
 Conversion		ENDP
 
 ; ------------------------------------------------------------------------
