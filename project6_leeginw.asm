@@ -81,11 +81,10 @@ ENDM
 
 
 ; global constants
-ARRAYSIZE = 3
+ARRAYSIZE = 1
 LENGTH_LIMIT = 12								; 12 digits exceed a 32-register (even with a sign char)
 
-MAX = 2147483647								; 2^31 - 1
-MIN = -2147483647								; -2^31
+MIN = -2147483648								; -2^31
 
 ; ASCII 
 PLUS = 43
@@ -285,13 +284,14 @@ Conversion		PROC
 	MOV		count, 0
 	MOV		sign, 0
 
-	; check for empty string
+	; [check for empty string]
 	CMP		ECX, 0								; if length is zero
 	JE		_error
 
 	JMP		_convert
 
-	; check for digit
+
+	; [check for digit]
 _digitCheck:
 	; AL has char
 	CMP		count, 0							
@@ -328,10 +328,7 @@ _remainDigit:
 	JMP		_error								; not a digit, then _error
 
 
-
-
-
-	; check for exceed
+	; [check for exceed?]
 _exceedCheck:
 
 
@@ -357,11 +354,14 @@ _convert:
 
 	; convert valid input to signed integer	
 _convertLoop:
-	MOV		EAX, val							; prep EAX for MUL
+	MOV		EAX, val							; prep EAX for MUL	
 	MOV		EBX, 10
 	MUL		EBX									; multiply by 10 to increase decimal digit
 
-	MOV		val, EAX							
+	; [check for exceed 1]
+	JO		_overFlow
+
+	MOV		val, EAX						
 
 	MOV		EAX, 0								; reset EAX
 	
@@ -374,6 +374,9 @@ _checkedDigit:
 	SUB		AL, 48								; convert ASCII to decimal value	
 	ADD		val, EAX							; combine the latest decimal digit
 
+	; [check for exceed 2]
+	JO		_overFLow
+
 	LOOP	_convertLoop						; LOOP until all inputString bytes are converted
 
 	MOV		EAX, val							; preserve valid numeric value in EAX
@@ -384,54 +387,26 @@ _checkedDigit:
 	NEG		EAX									; if sign is 1 (negative), multiply EAX by -1
 	JMP		_return
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+_overFlow:
+	; special case: -2,147,483,648
+	CMP		val, MIN
+	JE		_special
 
-
-
-	; first char
-;	DEC		ECX									; adjust count for the first char test
-
-;	LODSB										; [ESI] -> AL
-;	CALL	isDigit
-;	JNZ		_notDigit
-
-	; if a digit
-;_remaining:
-;	LODSB
-;	CALL	isDigit
-;	JNZ		_invalid
-;	LOOP	_remaining
-
-;_notDigit:
-	; '+' or '-'?
-
-		; if not, _invalid
-		; if '+' or '-', update signChar and _remaining
-			
-			; if '+', ignore and move to the next
-
-			; if '-', 
-
-	; remaining char	
-
-
-	; exceed
-
-
-	; _invalid
-;_invalid:
-	; error_msg prompt
-
-	
-
-;	JMP		_return
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 _error:
 	INC		error	
 	MOV		EBX, error
 
 	MOV		EDI, [EBP+16]
 	MOV		[EDI], EBX
+
+	JMP		_return
+
+_special:
+	; special case: 2,147,483,648 or +2,147,483,648
+	CMP		sign, 0
+	JE		_error
+
+	MOV		EAX, MIN
 
 	; restore registers [except for EAX]
 _return:
@@ -529,6 +504,7 @@ _loadInteger:
 
 _integer:		
 	CDQ
+	MOV		EDX, 0								; reset to zero
 	MOV		EBX, 10
 	IDIV	EBX
 	
@@ -591,6 +567,7 @@ _last:
 
 _integerSum:		
 	CDQ
+	MOV		EDX, 0								; reset to zero
 	MOV		EBX, 10
 	IDIV	EBX
 	
@@ -639,6 +616,7 @@ _integerSum:
 
 _integerAvg:		
 	CDQ
+	MOV		EDX, 0								; reset to zero
 	MOV		EBX, 10
 	IDIV	EBX
 	
