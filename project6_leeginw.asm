@@ -10,6 +10,7 @@ TITLE Project 6     (project6_leeginw.asm)
 ;	input assumption: 
 ;		1) no calculations (e.g., "12379+893", "180-2879", "1123x19")
 ;		2) sum of any two integers won't exceed a 32-register
+;		3) input doesn't start with zero, except for zero (e.g., "-042", "+00333")
 
 INCLUDE Irvine32.inc
 
@@ -80,7 +81,7 @@ ENDM
 
 
 ; global constants
-ARRAYSIZE = 2
+ARRAYSIZE = 3
 LENGTH_LIMIT = 12								; 12 digits exceed a 32-register (even with a sign char)
 
 MAX = 2147483647								; 2^31 - 1
@@ -198,6 +199,7 @@ introduction	ENDP
 ; Receives: 
 ; Returns:
 ; ------------------------------------------------------------------------
+
 ReadVal			PROC USES EBP
 	MOV		EBP, ESP
 
@@ -229,7 +231,6 @@ _getAgain:
 	JMP		_getAgain
 
 
-
 	; check EAX for invalid sign
 
 	; check for signChar
@@ -258,7 +259,7 @@ ReadVal			ENDP
 ; Returns:
 ; ------------------------------------------------------------------------
 Conversion		PROC
-	LOCAL	val:SDWORD, error:DWORD
+	LOCAL	val:SDWORD, error:DWORD, count:DWORD, sign:DWORD
 
 	; preserve registers [except for EAX]
 	PUSH	ESI
@@ -273,43 +274,88 @@ Conversion		PROC
 ;
 ; -------------------------------------
 
-	; initial setup
+	; initialize registers
 	MOV		ESI, [EBP+8]						; point ESI to inputString from mGetString
 	MOV		ECX, [EBP+12]						; length of inputString to ECX
-	
 	MOV		EAX, 0								; initialize EAX
-	MOV		error, 0							; initialize error
+	
+	; initialize local variables
+	MOV		val, 0								
+	MOV		error, 0							
+	MOV		count, 0
+	MOV		sign, 0
 
-;	is empty: 
+	; check for empty string
 	CMP		ECX, 0								; if length is zero
-	JNE		_nextVal
+	JE		_error
 
-	INC		error	
-	MOV		EBX, error
+	JMP		_convert
 
-	MOV		EDI, [EBP+16]
-	MOV		[EDI], EBX
+	; check for digit
+_digitCheck:
+	; AL has char
+	CMP		count, 0							
+	JNE		_remainDigit						; if not the first digit, jump to _remainDigit
 
-	JMP		_return
+	; if first digit
+	INC		count
 
-_nextVal:
-	MOV		EBX, error
+	CALL	IsDigit
+	JZ		_checkedDigit						; valid digit, move to _checkedDigit
 
-	MOV		EDI, [EBP+16]
-	MOV		[EDI], EBX							; reset errorFlag
+	; check if -
+	CMP		AL, 45
+	JE		_minusVal
+
+	; check if +
+	CMP		AL, 43
+	JE		_plusVal							; no change, jump to _checkedDigit
+
+	; neither a digit, positive, nor negative sign
+	JMP		_error
+
+_minusVal:
+	INC		sign								;change sign
+_plusVal:
+	DEC		ECX
+	JMP		_convertLoop
+	
+
+_remainDigit:
+	CALL	IsDigit
+	JZ		_checkedDigit
+	
+	JMP		_error								; not a digit, then _error
+
+
+
+
+
+	; check for exceed
+_exceedCheck:
+
+
+
+
+
 
 ; -------------------------------------
 ; conversion!
 ;
 ; -------------------------------------
-	; initial setup
+	; reset errorFlag to zero
+_convert:
+	MOV		EBX, error
+
+	MOV		EDI, [EBP+16]
+	MOV		[EDI], EBX
+
+	; conversion setup
 	MOV		ESI, [EBP+8]						; point ESI to inputString from mGetString
 	MOV		ECX, [EBP+12]						; length of inputString to ECX
 
-	MOV		val, 0								; initialize val
 
-	; convert valid input to signed integer
-	
+	; convert valid input to signed integer	
 _convertLoop:
 	MOV		EAX, val							; prep EAX for MUL
 	MOV		EBX, 10
@@ -321,6 +367,10 @@ _convertLoop:
 	
 	LODSB										; load one byte from inputString to AL 
 
+	JMP		_digitCheck							; jump to check digit
+_checkedDigit:
+
+
 	SUB		AL, 48								; convert ASCII to decimal value	
 	ADD		val, EAX							; combine the latest decimal digit
 
@@ -328,7 +378,11 @@ _convertLoop:
 
 	MOV		EAX, val							; preserve valid numeric value in EAX
 
+	CMP		sign, 0
+	JE		_return								; if sign is 0 (positive), jump to _return
 
+	NEG		EAX									; if sign is 1 (negative), multiply EAX by -1
+	JMP		_return
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -372,8 +426,12 @@ _convertLoop:
 
 ;	JMP		_return
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+_error:
+	INC		error	
+	MOV		EBX, error
 
-
+	MOV		EDI, [EBP+16]
+	MOV		[EDI], EBX
 
 	; restore registers [except for EAX]
 _return:
@@ -454,6 +512,21 @@ _loadInteger:
 	INC		EDI
 
 	LODSD										; [ESI] -> EAX
+	; check for a negative value
+	CMP		EAX, 0
+	JNL		_integer							; if positive, jump to _integer
+	
+	; display negative sign
+	PUSH	EAX
+
+	MOV		EAX, 0								; reset EAX
+	MOV		AL, BYTE PTR 45						; negative
+	CALL	WriteChar							; display minus sign
+	
+	POP		EAX
+	
+	NEG		EAX									; multiply by -1
+
 _integer:		
 	CDQ
 	MOV		EBX, 10
@@ -467,6 +540,7 @@ _integer:
 	MOV		EAX, EDX	
 
 	STOSB										; AL -> [EDI]
+	
 	POP		EAX
 
 	MOV		EDX, 0
@@ -499,6 +573,21 @@ _last:
 
 	MOV		count, 0
 	MOV		EAX, sum
+
+	; check for a negative value
+	CMP		EAX, 0
+	JNL		_integerSum							; if positive, jump to _integer
+	
+	; display negative sign
+	PUSH	EAX
+
+	MOV		EAX, 0								; reset EAX
+	MOV		AL, BYTE PTR 45						; negative
+	CALL	WriteChar							; display minus sign
+	
+	POP		EAX
+	
+	NEG		EAX									; multiply by -1
 
 _integerSum:		
 	CDQ
@@ -533,7 +622,22 @@ _integerSum:
 	MOV		count, 0
 	MOV		EAX, avg
 
-_integerAverage:		
+	; check for a negative value
+	CMP		EAX, 0
+	JNL		_integerAvg							; if positive, jump to _integer
+
+	; display negative sign
+	PUSH	EAX
+
+	MOV		EAX, 0								; reset EAX
+	MOV		AL, BYTE PTR 45						; negative
+	CALL	WriteChar							; display minus sign
+	
+	POP		EAX
+	
+	NEG		EAX									; multiply by -1
+
+_integerAvg:		
 	CDQ
 	MOV		EBX, 10
 	IDIV	EBX
@@ -550,7 +654,7 @@ _integerAverage:
 	INC		count
 
 	CMP		EAX, 0		
-	JNE		_integerAverage
+	JNE		_integerAvg
 
 	mDisplayString		EDI, count				; read backward using count
 
