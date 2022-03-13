@@ -10,7 +10,6 @@ TITLE Project 6     (project6_leeginw.asm)
 ;	input assumption: 
 ;		1) no calculations (e.g., "12379+893", "180-2879", "1123x19")
 ;		2) sum of any two integers won't exceed a 32-register
-;		3) input doesn't start with zero, except for zero (e.g., "-042", "+00333")
 
 INCLUDE Irvine32.inc
 
@@ -81,16 +80,17 @@ ENDM
 
 
 ; global constants
-ARRAYSIZE = 1
-LENGTH_LIMIT = 12								; 12 digits exceed a 32-register (even with a sign char)
+ARRAYSIZE = 10
+LENGTH_LIMIT = 500								; 12 digits exceed a 32-register (even with a sign char)
 
 MIN = -2147483648								; -2^31
 
-; ASCII 
+; ASCII
+SPACE = 32
+COMMA = 44
 PLUS = 43
 MINUS = 45
 ZERO = 48
-NINE = 57
 
 
 .data
@@ -124,9 +124,6 @@ errorFlag		DWORD		?
 
 
 displayString	BYTE		LENGTH_LIMIT DUP(?)
-
-ascii			BYTE		PLUS, MINUS, ZERO, NINE
-signChar		DWORD		?
 
 
 .code
@@ -230,10 +227,6 @@ _getAgain:
 	JMP		_getAgain
 
 
-	; check EAX for invalid sign
-
-	; check for signChar
-
 _valid:
 	STOSD										; EAX to OFFSET inputArray
 
@@ -304,11 +297,11 @@ _digitCheck:
 	JZ		_checkedDigit						; valid digit, move to _checkedDigit
 
 	; check if -
-	CMP		AL, 45
+	CMP		AL, MINUS							; - (ASCII)
 	JE		_minusVal
 
 	; check if +
-	CMP		AL, 43
+	CMP		AL, PLUS							; + (ASCII)
 	JE		_plusVal							; no change, jump to _checkedDigit
 
 	; neither a digit, positive, nor negative sign
@@ -371,7 +364,7 @@ _convertLoop:
 _checkedDigit:
 
 
-	SUB		AL, 48								; convert ASCII to decimal value	
+	SUB		AL, ZERO							; zero (ASCII)
 	ADD		val, EAX							; combine the latest decimal digit
 
 	; [check for exceed 2]
@@ -389,7 +382,7 @@ _checkedDigit:
 
 _overFlow:
 	; special case: -2,147,483,648
-	CMP		val, MIN
+	CMP		val, MIN							; -2,147,483,648
 	JE		_special
 
 _error:
@@ -406,7 +399,7 @@ _special:
 	CMP		sign, 0
 	JE		_error
 
-	MOV		EAX, MIN
+	MOV		EAX, MIN							; -2,147,483,648
 
 	; restore registers [except for EAX]
 _return:
@@ -481,9 +474,9 @@ _sumLoop:
 	MOV		count, 2
 	
 _loadInteger:	
-	MOV		[EDI], BYTE PTR 32					; space
+	MOV		[EDI], BYTE PTR SPACE				; space (ASCII)
 	INC		EDI
-	MOV		[EDI], BYTE PTR 44					; comma
+	MOV		[EDI], BYTE PTR COMMA				; comma (ASCII)
 	INC		EDI
 
 	LODSD										; [ESI] -> EAX
@@ -495,7 +488,7 @@ _loadInteger:
 	PUSH	EAX
 
 	MOV		EAX, 0								; reset EAX
-	MOV		AL, BYTE PTR 45						; negative
+	MOV		AL, MINUS							; negative (ASCII)
 	CALL	WriteChar							; display minus sign
 	
 	POP		EAX
@@ -508,7 +501,7 @@ _integer:
 	MOV		EBX, 10
 	IDIV	EBX
 	
-	ADD		EDX, 48
+	ADD		EDX, ZERO							; zero (ASCII)
 	
 
 	PUSH	EAX
@@ -558,7 +551,7 @@ _last:
 	PUSH	EAX
 
 	MOV		EAX, 0								; reset EAX
-	MOV		AL, BYTE PTR 45						; negative
+	MOV		AL, MINUS							; negative (ASCII)
 	CALL	WriteChar							; display minus sign
 	
 	POP		EAX
@@ -571,7 +564,7 @@ _integerSum:
 	MOV		EBX, 10
 	IDIV	EBX
 	
-	ADD		EDX, 48
+	ADD		EDX, ZERO							; zero (ASCII)
 
 	PUSH	EAX
 	MOV		EAX, EDX	
@@ -607,7 +600,7 @@ _integerSum:
 	PUSH	EAX
 
 	MOV		EAX, 0								; reset EAX
-	MOV		AL, BYTE PTR 45						; negative
+	MOV		AL, MINUS							; negative (ASCII)
 	CALL	WriteChar							; display minus sign
 	
 	POP		EAX
@@ -620,7 +613,7 @@ _integerAvg:
 	MOV		EBX, 10
 	IDIV	EBX
 	
-	ADD		EDX, 48
+	ADD		EDX, ZERO							; zero (ASCII)
 
 	PUSH	EAX
 	MOV		EAX, EDX	
